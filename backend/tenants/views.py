@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from tenants.models import Tenant, TenantMembership
+from tenants.permissions import IsTenantAdmin
 from tenants.serializers import TenantMembershipSerializer, TenantSerializer, UserRegistrationSerializer
 
 
@@ -19,6 +20,11 @@ class TenantViewSet(viewsets.ModelViewSet):
 class TenantMembershipViewSet(viewsets.ModelViewSet):
     serializer_class = TenantMembershipSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ('create', 'update', 'partial_update', 'destroy'):
+            return [IsTenantAdmin()]
+        return super().get_permissions()
 
     def get_queryset(self):
         return TenantMembership.objects.filter(tenant__memberships__user=self.request.user)
