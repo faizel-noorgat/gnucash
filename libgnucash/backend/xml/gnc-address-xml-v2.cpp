@@ -96,26 +96,13 @@ struct address_pdata
     GncAddress* address;
 };
 
-static gboolean
-set_string (xmlNodePtr node, GncAddress* addr,
-            void (*func) (GncAddress* addr, const char* txt))
-{
-    gchar* txt = dom_tree_to_text (node);
-    g_return_val_if_fail (txt, FALSE);
-
-    func (addr, txt);
-
-    g_free (txt);
-
-    return TRUE;
-}
 
 static gboolean
 address_name_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetName);
+    return apply_xmlnode_text (gncAddressSetName, pdata->address, node);
 }
 
 static gboolean
@@ -123,7 +110,7 @@ address_addr1_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetAddr1);
+    return apply_xmlnode_text (gncAddressSetAddr1, pdata->address, node);
 }
 
 static gboolean
@@ -131,7 +118,7 @@ address_addr2_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetAddr2);
+    return apply_xmlnode_text (gncAddressSetAddr2, pdata->address, node);
 }
 
 static gboolean
@@ -139,7 +126,7 @@ address_addr3_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetAddr3);
+    return apply_xmlnode_text (gncAddressSetAddr3, pdata->address, node);
 }
 
 static gboolean
@@ -147,7 +134,7 @@ address_addr4_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetAddr4);
+    return apply_xmlnode_text (gncAddressSetAddr4, pdata->address, node);
 }
 
 static gboolean
@@ -155,7 +142,7 @@ address_phone_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetPhone);
+    return apply_xmlnode_text (gncAddressSetPhone, pdata->address, node);
 }
 
 static gboolean
@@ -163,7 +150,7 @@ address_fax_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetFax);
+    return apply_xmlnode_text (gncAddressSetFax, pdata->address, node);
 }
 
 static gboolean
@@ -171,7 +158,7 @@ address_email_handler (xmlNodePtr node, gpointer addr_pdata)
 {
     struct address_pdata* pdata = static_cast<decltype (pdata)> (addr_pdata);
 
-    return set_string (node, pdata->address, gncAddressSetEmail);
+    return apply_xmlnode_text (gncAddressSetEmail, pdata->address, node);
 }
 
 static gboolean

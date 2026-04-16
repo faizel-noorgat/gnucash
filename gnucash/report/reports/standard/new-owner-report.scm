@@ -53,6 +53,7 @@
 (define desc-header (N_ "Description"))
 (define sale-header (N_ "Sale"))
 (define tax-header (N_ "Tax"))
+(define job-header (N_ "Job"))
 (define credit-header (N_ "Credits"))
 (define debit-header (N_ "Debits"))
 (define balance-header (N_ "Balance"))
@@ -158,6 +159,8 @@
   (vector-ref columns-used 9))
 (define (doclink-col columns-used)
   (vector-ref columns-used 10))
+(define (job-col columns-used)
+  (vector-ref columns-used 11))
 
 (define (num-cols columns-used section)
   (let* ((date? (date-col columns-used))
@@ -165,6 +168,7 @@
          (ref? (ref-col columns-used))
          (type? (type-col columns-used))
          (desc? (desc-col columns-used))
+         (job? (job-col columns-used))
          (sale? (sale-col columns-used))
          (tax? (tax-col columns-used))
          (credit? (credit-col columns-used))
@@ -175,9 +179,9 @@
          (amt? (or credit? debit?))
          (cols-alist
           (list
-           (list 'lhs-cols date? due? ref? type? desc? sale? tax? credit? debit? bal?
+           (list 'lhs-cols date? due? ref? type? job? desc? sale? tax? credit? debit? bal?
                  doclink?)
-           (list 'ptt-span date? due? ref? type? desc? doclink?)
+           (list 'ptt-span date? due? ref? type? job? desc? doclink?)
            (list 'mid-spac spacer?)
            (list 'rhs-cols date? ref? type? desc? amt? amt?)
            (list 'rhs-span date? ref? type? desc?)))
@@ -191,7 +195,7 @@
    (map opt-val
         (list date-header due-date-header reference-header type-header
               desc-header sale-header tax-header debit-header credit-header
-              balance-header doclink-header))))
+              balance-header doclink-header job-header))))
 
 (define (make-heading-list column-vector link-option)
   (let ((heading-list '()))
@@ -205,6 +209,8 @@
         (addto! heading-list (G_ type-header)))
     (if (desc-col column-vector)
         (addto! heading-list (G_ desc-header)))
+    (if (job-col column-vector)
+        (addto! heading-list (G_ job-header)))
     (if (doclink-col column-vector)
         (addto! heading-list (C_ "Column header for 'Document Link'" "L")))
     (if (sale-col column-vector)
@@ -258,6 +264,10 @@
   (gnc:html-markup-anchor
    (gnc:invoice-anchor-text inv)
    (gncInvoiceGetID inv)))
+
+(define (invoice->job invoice)
+  (let ((owner (gncInvoiceGetOwner invoice)))
+    (and (eqv? (gncOwnerGetType owner) GNC-OWNER-JOB) (gncOwnerGetJob owner))))
 
 (define (split->reference split)
   (let* ((txn (xaccSplitGetParent split))
@@ -336,7 +346,7 @@
 ;;
 ;; Make a row list based on the visible columns
 ;;
-(define (add-row table odd-row? column-vector date due-date ref type-str
+(define (add-row table odd-row? column-vector date due-date ref type-str job
                  desc doclink currency amt debit credit sale tax lhs-class
                  link-option link-rows)
   (define nrows (if link-rows (length link-rows) 1))
@@ -429,6 +439,7 @@
               (addif (ref-col column-vector)    ref)
               (addif (type-col column-vector)   type-str)
               (addif (desc-col column-vector)   desc)
+              (addif (job-col column-vector)    job)
               (addif (doclink-col column-vector) doclink)))
             (map
              (lambda (str)
@@ -548,7 +559,7 @@ and do not match the transaction."))))))))
                               payable? date-type currency)))))
 
   (define (add-balance-row odd-row? total)
-    (add-row table odd-row? used-columns start-date #f "" (G_ "Balance") "" #f
+    (add-row table odd-row? used-columns start-date #f #f #f (G_ "Balance") "" #f
              currency total #f #f #f #f #f
              link-option (case link-option
                            ((none) '(()))
@@ -794,6 +805,8 @@ and do not match the transaction."))))))))
          table odd-row? used-columns date (gncInvoiceGetDateDue invoice)
          (split->reference split)
          (split->type-str split payable?)
+         (let ((job (invoice->job invoice)))
+           (and job (gnc:make-html-text (gncJobGetID job))))
          (splits->desc (list split))
          (and (not (string-null? (gncInvoiceGetDocLink invoice)))
               (gnc:html-invoice-doclink-anchor
@@ -834,6 +847,7 @@ and do not match the transaction."))))))))
          table odd-row? used-columns date #f
          (split->reference split)
          (split->type-str split payable?)
+         #f
          (splits->desc (xaccTransGetAPARAcctSplitList txn #t) #t)
          (and (not (string-null? (xaccTransGetDocLink txn)))
               (gnc:html-transaction-doclink-anchor
@@ -877,7 +891,7 @@ and do not match the transaction."))))))))
 
   (gnc-register-simple-boolean-option options
     (N_ "Display Columns") due-date-header
-    "c" (N_ "Display the transaction date?") #t)
+    "c" (N_ "Display the invoice due date?") #t)
 
   (gnc-register-simple-boolean-option options
     (N_ "Display Columns") reference-header
@@ -886,6 +900,11 @@ and do not match the transaction."))))))))
   (gnc-register-simple-boolean-option options
     (N_ "Display Columns") type-header
     "g" (N_ "Display the transaction type?") #t)
+
+  (unless (eqv? GNC-OWNER-JOB owner-type)
+    (gnc-register-simple-boolean-option
+     options (N_ "Display Columns") job-header
+     "gg" (N_ "Display the associated job?") #f))
 
   (gnc-register-simple-boolean-option options
     (N_ "Display Columns") desc-header
@@ -1128,8 +1147,8 @@ and do not match the transaction."))))))))
 
           (gnc:html-document-add-object!
            document (gnc:make-html-text
-                     (string-append (G_ "Date Range") ": " (qof-print-date start-date)
-                                    " - " (qof-print-date end-date))))
+                     (string-append (G_ "Date Range") ": "
+                                    (gnc-date-interval-format start-date end-date))))
 
           (make-break! document)
 

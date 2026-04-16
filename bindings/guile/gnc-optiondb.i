@@ -59,8 +59,8 @@ namespace std {
 
 %enddef
 
-%typemap(in) std::size_t "$1 = scm_to_ulong($input);";
-%typemap(out) std::size_t "$result = scm_from_ulong($1);";
+%typemap(in) std::size_t "$1 = scm_to_ssize_t($input);";
+%typemap(out) std::size_t "$result = scm_from_ssize_t($1);";
 
 %begin
 %{
@@ -294,7 +294,6 @@ scm_from_value<GncOptionAccountList>(GncOptionAccountList value)
     for (auto guid : value)
     {
         auto acct{xaccAccountLookup(&guid, book)};
-        if (!GNC_IS_ACCOUNT(acct)) continue;
         s_list = scm_cons(SWIG_NewPointerObj(acct, SWIGTYPE_p_Account, 0),
                           s_list);
     }
@@ -592,6 +591,10 @@ gnc_option_test_book_destroy(QofBook* book)
       $1 = rdp;
 }
 
+%typecheck(SWIG_TYPECHECK_INTEGER) RelativeDatePeriod {
+    $1 = scm_is_integer($input) || scm_is_symbol($input) ? 1 : 0;
+}
+
 %typemap(in) RelativeDatePeriodVec& (RelativeDatePeriodVec period_set)
 {
     for (SCM node = $input; !scm_is_null (node); node = scm_cdr (node))
@@ -658,7 +661,7 @@ gnc_option_test_book_destroy(QofBook* book)
         SCM s_account = scm_car (node);
         Account* acct = (Account*)SWIG_MustGetPtr(s_account,
                                                   SWIGTYPE_p_Account, 1, 0);
-        if (GNC_IS_ACCOUNT(acct))
+        if (acct)
             $1.push_back(*qof_entity_get_guid(acct));
     }
 }
@@ -692,7 +695,7 @@ gnc_option_test_book_destroy(QofBook* book)
         SCM s_account = scm_car (node);
         Account* acct = (Account*)SWIG_MustGetPtr(s_account,
                                                   SWIGTYPE_p_Account, 1, 0);
-        if (GNC_IS_ACCOUNT(acct))
+        if (acct)
             alist.push_back(*qof_entity_get_guid(acct));
     }
     $1 = &alist;
@@ -707,7 +710,6 @@ gnc_option_test_book_destroy(QofBook* book)
         SCM s_account = scm_car (node);
         Account* acct = (Account*)SWIG_MustGetPtr(s_account,
                                                   SWIGTYPE_p_Account, 1, 0);
-        if (!GNC_IS_ACCOUNT(acct)) continue;
         acclist.push_back(*qof_entity_get_guid(acct));
     }
     $1 = &acclist;
@@ -726,7 +728,6 @@ gnc_option_test_book_destroy(QofBook* book)
     for (auto guid : $1)
     {
         auto acct{xaccAccountLookup(&guid, book)};
-        if (!GNC_IS_ACCOUNT(acct)) continue;
         $result = scm_cons(SWIG_NewPointerObj(acct, SWIGTYPE_p_Account, 0),
                            $result);
     }
@@ -740,7 +741,6 @@ gnc_option_test_book_destroy(QofBook* book)
     for (auto guid : *$1)
     {
         auto acct{xaccAccountLookup(&guid, book)};
-        if (!GNC_IS_ACCOUNT(acct)) continue;
         $result = scm_cons(SWIG_NewPointerObj(acct, SWIGTYPE_p_Account, 0),
                            $result);
     }

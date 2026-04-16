@@ -257,20 +257,18 @@ static gboolean
 set_parent_child (xmlNodePtr node, struct billterm_pdata* pdata,
                   void (*func) (GncBillTerm*, GncBillTerm*))
 {
-    GncGUID* guid;
     GncBillTerm* term;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    term = gncBillTermLookup (pdata->book, guid);
+    term = gncBillTermLookup (pdata->book, &*guid);
     if (!term)
     {
         term = gncBillTermCreate (pdata->book);
         gncBillTermBeginEdit (term);
-        gncBillTermSetGUID (term, guid);
+        gncBillTermSetGUID (term, &*guid);
         gncBillTermCommitEdit (term);
     }
-    guid_free (guid);
     g_return_val_if_fail (term, FALSE);
     func (pdata->term, term);
 
@@ -278,26 +276,14 @@ set_parent_child (xmlNodePtr node, struct billterm_pdata* pdata,
 }
 
 static gboolean
-set_string (xmlNodePtr node, GncBillTerm* term,
-            void (*func) (GncBillTerm*, const char*))
-{
-    char* txt = dom_tree_to_text (node);
-    g_return_val_if_fail (txt, FALSE);
-    func (term, txt);
-    g_free (txt);
-    return TRUE;
-}
-
-static gboolean
 billterm_guid_handler (xmlNodePtr node, gpointer billterm_pdata)
 {
     struct billterm_pdata* pdata = static_cast<decltype (pdata)> (billterm_pdata);
-    GncGUID* guid;
     GncBillTerm* term;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    term = gncBillTermLookup (pdata->book, guid);
+    term = gncBillTermLookup (pdata->book, &*guid);
     if (term)
     {
         gncBillTermDestroy (pdata->term);
@@ -306,10 +292,8 @@ billterm_guid_handler (xmlNodePtr node, gpointer billterm_pdata)
     }
     else
     {
-        gncBillTermSetGUID (pdata->term, guid);
+        gncBillTermSetGUID (pdata->term, &*guid);
     }
-
-    guid_free (guid);
 
     return TRUE;
 }
@@ -318,14 +302,14 @@ static gboolean
 billterm_name_handler (xmlNodePtr node, gpointer billterm_pdata)
 {
     struct billterm_pdata* pdata = static_cast<decltype (pdata)> (billterm_pdata);
-    return set_string (node, pdata->term, gncBillTermSetName);
+    return apply_xmlnode_text (gncBillTermSetName, pdata->term, node);
 }
 
 static gboolean
 billterm_desc_handler (xmlNodePtr node, gpointer billterm_pdata)
 {
     struct billterm_pdata* pdata = static_cast<decltype (pdata)> (billterm_pdata);
-    return set_string (node, pdata->term, gncBillTermSetDescription);
+    return apply_xmlnode_text (gncBillTermSetDescription, pdata->term, node);
 }
 
 static gboolean

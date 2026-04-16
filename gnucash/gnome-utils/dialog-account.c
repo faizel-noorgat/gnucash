@@ -505,20 +505,23 @@ gnc_ui_to_account (AccountWindow *aw)
         xaccAccountSetDescription (account, string);
 
     gtk_color_chooser_get_rgba (GTK_COLOR_CHOOSER(aw->color_entry_button), &color);
-    string = gdk_rgba_to_string (&color);
-
-    if (g_strcmp0 (string, DEFAULT_COLOR) == 0)
-        string = NULL;
+    char* new_string = gdk_rgba_to_string (&color);
+    if (!g_strcmp0 (new_string, DEFAULT_COLOR))
+    {
+        g_free(new_string);
+        new_string = NULL;
+    }
 
     old_string = xaccAccountGetColor (account);
 
-    if (!string && old_string)
+    if (!g_strcmp0 (new_string, DEFAULT_COLOR) && old_string)
         xaccAccountSetColor (account, ""); // remove entry
     else
     {
-        if (g_strcmp0 (string, old_string) != 0)
-            xaccAccountSetColor (account, string); // update entry
+        if (g_strcmp0 (new_string, old_string) != 0)
+            xaccAccountSetColor (account, new_string); // update entry
     }
+    g_free (new_string);
 
     commodity = (gnc_commodity *)
                 gnc_general_select_get_selected (GNC_GENERAL_SELECT(aw->commodity_edit));
@@ -548,7 +551,8 @@ gnc_ui_to_account (AccountWindow *aw)
 
     gtk_text_buffer_get_start_iter (aw->notes_text_buffer, &start);
     gtk_text_buffer_get_end_iter (aw->notes_text_buffer, &end);
-    char *new_string = gtk_text_buffer_get_text (aw->notes_text_buffer, &start, &end, FALSE);
+    new_string = gtk_text_buffer_get_text (aw->notes_text_buffer, &start, &end,
+                                           FALSE);
     old_string = xaccAccountGetNotes (account);
     if (g_strcmp0 (new_string, old_string))
         xaccAccountSetNotes (account, new_string);
@@ -2520,7 +2524,7 @@ gnc_account_cascade_properties_dialog (GtkWidget *window, Account *account)
     {
         GList *accounts = gnc_account_get_descendants (account);
         GdkRGBA new_color;
-        const gchar *new_color_string = NULL;
+        gchar *new_color_string = NULL;
         gboolean color_active = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(enable_color));
         gboolean placeholder_active = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(enable_placeholder));
         gboolean hidden_active = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(enable_hidden));
@@ -2535,7 +2539,10 @@ gnc_account_cascade_properties_dialog (GtkWidget *window, Account *account)
             new_color_string = gdk_rgba_to_string (&new_color);
 
             if (g_strcmp0 (new_color_string, DEFAULT_COLOR) == 0)
+            {
+                g_free (new_color_string);
                 new_color_string = NULL;
+            }
 
             // check/update selected account
             update_account_color (account, old_color_string, new_color_string, replace);
@@ -2569,6 +2576,7 @@ gnc_account_cascade_properties_dialog (GtkWidget *window, Account *account)
             }
         }
         g_list_free (accounts);
+        g_free (new_color_string);
     }
     if (old_color_string)
         g_free (old_color_string);

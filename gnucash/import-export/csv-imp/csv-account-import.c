@@ -30,6 +30,7 @@
 #include <glib/gi18n.h>
 #include <glib/gstdio.h>
 
+#include "gnc-glib-utils.h"
 #include "gnc-ui-util.h"
 #include <regex.h>
 #include "Account.h"
@@ -98,8 +99,21 @@ csv_import_read_file (GtkWindow *window, const gchar *filename,
         return RESULT_OPEN_FAILED;
     }
 
-    contents = g_locale_to_utf8 (locale_cont, -1, NULL, NULL, NULL);
-    g_free (locale_cont);
+    // if the contents don't conform to UTF-8, try a default charcter set
+    // conversion based on locale
+    if (g_utf8_validate(locale_cont, -1, NULL))
+    {
+        contents = locale_cont;
+    }
+    else
+    {
+        contents = g_locale_to_utf8 (locale_cont, -1, NULL, NULL, NULL);
+        g_free (locale_cont);
+    }
+
+    // Remove the potential XML-prohibited codepoints from the UTF-8 compliant content
+    gnc_utf8_strip_invalid(contents);
+
 
     // compile the regular expression and check for errors
     err = NULL;

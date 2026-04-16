@@ -276,7 +276,7 @@ static GncInvoice* invoice_from_split (Split* split);
 #define LINK_TRANSACTION_OPEN_LABEL      N_("_Open Linked Document")
 /* Translators: This is a menu item that will open the bill, invoice, or voucher
    that is posted to the current transaction if there is one. */
-#define JUMP_LINKED_INVOICE_LABEL        N_("Jump to Invoice")
+#define JUMP_LINKED_INVOICE_LABEL        N_("Jump to Business item")
 #define CUT_SPLIT_LABEL                  N_("Cu_t Split")
 #define COPY_SPLIT_LABEL                 N_("_Copy Split")
 #define PASTE_SPLIT_LABEL                N_("_Paste Split")
@@ -289,7 +289,7 @@ static GncInvoice* invoice_from_split (Split* split);
 #define DELETE_TRANSACTION_TIP           N_("Delete the current transaction")
 #define LINK_TRANSACTION_TIP             N_("Add, change, or unlink the document linked with the current transaction")
 #define LINK_TRANSACTION_OPEN_TIP        N_("Open the linked document for the current transaction")
-#define JUMP_LINKED_INVOICE_TIP          N_("Jump to the linked bill, invoice, or voucher")
+#define JUMP_LINKED_INVOICE_TIP          N_("Jump to the linked invoice, bill, expense or credit note")
 #define CUT_SPLIT_TIP                    N_("Cut the selected split into clipboard")
 #define COPY_SPLIT_TIP                   N_("Copy the selected split into clipboard")
 #define PASTE_SPLIT_TIP                  N_("Paste the split from the clipboard")
@@ -401,10 +401,6 @@ static GncToolBarShortNames toolbar_labels[] =
     { "ScheduleTransactionAction",          N_ ("Schedule") },
     { "BlankTransactionAction",             N_ ("Blank") },
     { "ActionsReconcileAction",             N_ ("Reconcile") },
-    { "ActionsAutoClearAction",             N_ ("Auto-clear") },
-    { "LinkTransactionAction",              N_ ("Manage Document Link") },
-    { "LinkedTransactionOpenAction",        N_ ("Open Linked Document") },
-    { "JumpLinkedInvoiceAction",            N_ ("Invoice") },
     { "ActionsStockAssistantAction",        N_ ("Stock Assistant") },
     { NULL, NULL },
 };
@@ -805,9 +801,6 @@ static const char* tran_action_labels[] =
     PASTE_TRANSACTION_LABEL,
     DUPLICATE_TRANSACTION_LABEL,
     DELETE_TRANSACTION_LABEL,
-    LINK_TRANSACTION_LABEL,
-    LINK_TRANSACTION_OPEN_LABEL,
-    JUMP_LINKED_INVOICE_LABEL,
     NULL
 };
 
@@ -819,9 +812,6 @@ static const char* tran_action_tips[] =
     PASTE_TRANSACTION_TIP,
     DUPLICATE_TRANSACTION_TIP,
     DELETE_TRANSACTION_TIP,
-    LINK_TRANSACTION_TIP,
-    LINK_TRANSACTION_OPEN_TIP,
-    JUMP_LINKED_INVOICE_TIP,
     NULL
 };
 
@@ -1037,6 +1027,12 @@ gnc_plugin_page_register_ui_update (gpointer various,
     }
 
     gnc_plugin_business_split_reg_ui_update (GNC_PLUGIN_PAGE(page));
+
+    // Transaction/Split paste action
+    action = gnc_plugin_page_get_action (GNC_PLUGIN_PAGE(page),
+                                         "PasteTransactionAction");
+    g_simple_action_set_enabled (G_SIMPLE_ACTION(action),
+                                 gnc_split_register_has_copied_item());
 
     /* If we are read only, make any modifying action inactive */
     if (read_only_reg)
@@ -1258,6 +1254,7 @@ gnc_plugin_page_register_create_widget (GncPluginPage* plugin_page)
                              gnc_window_get_gtk_window (gnc_window),
                              numRows, priv->read_only);
     priv->gsr = (GNCSplitReg *)gsr;
+    g_object_ref(gsr);
 
     gtk_widget_show (gsr);
     gtk_box_pack_start (GTK_BOX (priv->widget), gsr, TRUE, TRUE, 0);
@@ -1509,8 +1506,13 @@ gnc_plugin_page_register_destroy_widget (GncPluginPage* plugin_page)
     qof_query_destroy (priv->filter_query);
 
     gtk_widget_hide (priv->widget);
+
+    g_object_unref(priv->widget);
+    priv->widget = NULL;
+
     gnc_ledger_display_close (priv->ledger);
     priv->ledger = NULL;
+
     LEAVE (" ");
 }
 
@@ -3654,6 +3656,17 @@ gnc_plugin_page_register_cmd_cut (GSimpleAction *simple,
 
     ENTER ("(action %p, page %p)", simple, page);
     priv = GNC_PLUGIN_PAGE_REGISTER_GET_PRIVATE (page);
+
+    GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW (priv->gsr->window));
+    const char *name = gtk_widget_get_name(widget);
+    if (strcmp(name, "GnucashSheet") != 0)
+    {
+        gtk_editable_cut_clipboard( GTK_EDITABLE(widget));
+        LEAVE("Not cut from GnucashSheet");
+
+        return;
+    }
+
     gnucash_register_cut_clipboard (priv->gsr->reg);
     LEAVE ("");
 }
@@ -3671,6 +3684,17 @@ gnc_plugin_page_register_cmd_copy (GSimpleAction *simple,
 
     ENTER ("(action %p, page %p)", simple, page);
     priv = GNC_PLUGIN_PAGE_REGISTER_GET_PRIVATE (page);
+
+    GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW (priv->gsr->window));
+    const char *name = gtk_widget_get_name(widget);
+    if (strcmp(name, "GnucashSheet") != 0)
+    {
+        gtk_editable_copy_clipboard( GTK_EDITABLE(widget));
+        LEAVE("Not copied from GnucashSheet");
+
+        return;
+    }
+
     gnucash_register_copy_clipboard (priv->gsr->reg);
     LEAVE ("");
 }
@@ -3688,6 +3712,17 @@ gnc_plugin_page_register_cmd_paste (GSimpleAction *simple,
 
     ENTER ("(action %p, page %p)", simple, page);
     priv = GNC_PLUGIN_PAGE_REGISTER_GET_PRIVATE (page);
+
+    GtkWidget *widget = gtk_window_get_focus(GTK_WINDOW (priv->gsr->window));
+    const char *name = gtk_widget_get_name(widget);
+    if (strcmp(name, "GnucashSheet") != 0)
+    {
+        gtk_editable_paste_clipboard( GTK_EDITABLE(widget));
+        LEAVE("Not pasted to GnucashSheet");
+
+        return;
+    }
+
     gnucash_register_paste_clipboard (priv->gsr->reg);
     LEAVE ("");
 }
@@ -3777,6 +3812,12 @@ gnc_plugin_page_register_cmd_cut_transaction (GSimpleAction *simple,
 
     priv = GNC_PLUGIN_PAGE_REGISTER_GET_PRIVATE (page);
     gsr_default_cut_txn_handler (priv->gsr, NULL);
+
+    // Transaction/Split paste action
+    GAction *action = gnc_plugin_page_get_action (GNC_PLUGIN_PAGE(page),
+                                                  "PasteTransactionAction");
+    g_simple_action_set_enabled (G_SIMPLE_ACTION(action),
+                                 gnc_split_register_has_copied_item());
     LEAVE (" ");
 }
 
@@ -3796,6 +3837,12 @@ gnc_plugin_page_register_cmd_copy_transaction (GSimpleAction *simple,
     priv = GNC_PLUGIN_PAGE_REGISTER_GET_PRIVATE (page);
     reg = gnc_ledger_display_get_split_register (priv->ledger);
     gnc_split_register_copy_current (reg);
+
+    // Transaction/Split paste action
+    GAction *action = gnc_plugin_page_get_action (GNC_PLUGIN_PAGE(page),
+                                                  "PasteTransactionAction");
+    g_simple_action_set_enabled (G_SIMPLE_ACTION(action),
+                                 gnc_split_register_has_copied_item());
     LEAVE (" ");
 }
 
@@ -4685,8 +4732,8 @@ gnc_plugin_page_register_cmd_jump_linked_invoice (GSimpleAction *simple,
             }
             details = g_list_reverse (details);
             choice = gnc_choose_radio_option_dialog
-                (window, _("Select document"),
-                 _("Several documents are linked with this transaction. \
+                (window, _("Select Business Item"),
+                 _("Several business items are linked with this transaction. \
 Please choose one:"), _("Select"), 0, details);
             if ((choice >= 0) && ((size_t)choice < invoices.size()))
                 invoice = invoices[choice];

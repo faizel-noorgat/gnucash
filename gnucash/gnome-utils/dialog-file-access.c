@@ -22,7 +22,6 @@
  * Boston, MA  02110-1301,  USA       gnu@gnu.org                   *
 \********************************************************************/
 
-#include <stdbool.h>
 #include <config.h>
 
 #include <gtk/gtk.h>
@@ -34,13 +33,16 @@
 #include "dialog-utils.h"
 #include "dialog-file-access.h"
 #include "gnc-file.h"
-#include "gnc-filepath-utils.h"
 #include "gnc-plugin-file-history.h"
 #include "gnc-session.h"
 
 static QofLogModule log_module = GNC_MOD_GUI;
 
-#define DEFAULT_HOST "localhost"
+/* MariaDB/MySQL/Postgres optimize localhost to a unix socket but
+ * flatpak won't connect to unix sockets without gymnastics default to
+ * the localhost IP to force a network connection.
+ */
+#define DEFAULT_HOST "127.0.0.1"
 #define DEFAULT_DATABASE PROJECT_NAME
 #define FILE_ACCESS_OPEN    0
 #define FILE_ACCESS_SAVE_AS 1
@@ -140,8 +142,7 @@ gnc_ui_file_access_response_cb(GtkDialog *dialog, gint response, GtkDialog *unus
         }
         if (g_str_has_prefix (url, "file://"))
         {
-            if ( g_file_test( g_filename_from_uri( url, NULL, NULL ),
-                              G_FILE_TEST_IS_DIR ))
+          if ( g_file_test (gnc_uri_get_path (url), G_FILE_TEST_IS_DIR))
             {
                 gtk_file_chooser_set_current_folder_uri( faw->fileChooser, url );
                 return;
@@ -248,15 +249,6 @@ get_default_database( void )
     return default_db;
 }
 
-typedef bool (*CharToBool)(const char*);
-
-static bool datafile_filter (const GtkFileFilterInfo* filter_info,
-                             CharToBool filename_checker)
-{
-    return filter_info && filter_info->filename &&
-        filename_checker (filter_info->filename);
-}
-
 static void free_file_access_window (FileAccessWindow *faw)
 {
     g_free (faw->starting_dir);
@@ -354,30 +346,8 @@ gnc_ui_file_access (GtkWindow *parent, int type)
     faw->fileChooser = GTK_FILE_CHOOSER(fileChooser);
     gtk_box_pack_start( GTK_BOX(file_chooser), GTK_WIDGET(fileChooser), TRUE, TRUE, 6 );
 
-    /* set up .gnucash filters for Datafile operations */
-    GtkFileFilter *filter = gtk_file_filter_new ();
-    gtk_file_filter_set_name (filter, _("All files"));
-    gtk_file_filter_add_pattern (filter, "*");
-    gtk_file_chooser_add_filter (faw->fileChooser, filter);
-
-    filter = gtk_file_filter_new ();
-    /* Translators: *.gnucash and *.xac are file patterns and must not
-       be translated*/
-    gtk_file_filter_set_name (filter, _("Datafiles only (*.gnucash, *.xac)"));
-    gtk_file_filter_add_custom (filter, GTK_FILE_FILTER_FILENAME,
-                                (GtkFileFilterFunc)datafile_filter,
-                                gnc_filename_is_datafile, NULL);
-    gtk_file_chooser_add_filter (faw->fileChooser, filter);
-    gtk_file_chooser_set_filter (faw->fileChooser, filter);
-
-    filter = gtk_file_filter_new ();
-    /* Translators: *.gnucash.*.gnucash, *.xac.*.xac are file
-       patterns and must not be translated*/
-    gtk_file_filter_set_name (filter, _("Backups only (*.gnucash.*.gnucash, *.xac.*.xac)"));
-    gtk_file_filter_add_custom (filter, GTK_FILE_FILTER_FILENAME,
-                                (GtkFileFilterFunc)datafile_filter,
-                                gnc_filename_is_backup, NULL);
-    gtk_file_chooser_add_filter (faw->fileChooser, filter);
+    gnc_file_chooser_add_filters (faw->fileChooser,
+                                  gnc_file_chooser_get_datafile_filters ());
 
     /* Set the default directory */
     if (type == FILE_ACCESS_OPEN || type == FILE_ACCESS_SAVE_AS)

@@ -182,7 +182,10 @@
               <object class="GtkLabel" id="sep_label">
                 <property name="visible">True</property>
                 <property name="can-focus">False</property>
-                <property name="label" translatable="yes">&lt;b&gt;Separator Character&lt;/b&gt;</property>
+                <property name="label" translatable="yes">Separator Character</property>
+                  <style>
+                    <class name="gnc-class-strong"/>
+                  </style>
                 <property name="use-markup">True</property>
               </object>
               <packing>
@@ -326,7 +329,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Summarybar Content&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Summary Bar Content</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -376,9 +382,9 @@ Press 'Close' to return to the preference window
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Start Date</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -391,9 +397,9 @@ Press 'Close' to return to the preference window
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">End Date</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -596,7 +602,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Separator Character&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Separator Character</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -627,7 +636,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Labels&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Labels</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -707,7 +719,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Reverse Balanced Accounts&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Reverse Balanced Accounts</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -740,7 +755,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Default Currency&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Default Currency</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -814,9 +832,9 @@ Press 'Close' to return to the preference window
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Account Color</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -1019,9 +1037,9 @@ Press 'Close' to return to the preference window
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Fancy Date Format</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -1044,9 +1062,9 @@ Press 'Close' to return to the preference window
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Date Format</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -1058,7 +1076,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Time Format&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Time Format</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -1099,7 +1120,10 @@ Press 'Close' to return to the preference window
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Date Completion&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Date Completion</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -1212,7 +1236,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Numbers&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Numbers</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -1407,9 +1434,9 @@ many months before the current month</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes" comments="Preferences Dialog, General Tab">General</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -1520,7 +1547,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;_Retain log/backup files&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">_Retain log/backup files</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                     <property name="use-underline">True</property>
                     <property name="mnemonic-widget">pref/general/retain-days</property>
@@ -1553,7 +1583,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Files&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Files</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -1586,7 +1619,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Search Dialog&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Search Dialog</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -1958,7 +1994,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Linked Files&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Linked Files</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -2096,9 +2135,9 @@ many months before the current month</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">General</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -2388,7 +2427,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Checks&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Checks</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -2501,7 +2543,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Actions&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Actions</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -2662,7 +2707,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Reconciling&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Reconciling</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -2725,13 +2773,30 @@ many months before the current month</property>
                   </packing>
                 </child>
                 <child>
+                  <object class="GtkCheckButton" id="pref/dialogs.reconcile/enable-autoclear-in-reconcile">
+                    <property name="label" translatable="yes">Enable autoclear tools in reconciliation</property>
+                    <property name="visible">True</property>
+                    <property name="can-focus">True</property>
+                    <property name="receives-default">False</property>
+                    <property name="has-tooltip">True</property>
+                    <property name="tooltip-text" translatable="yes">Provides automatic clearing tools in the reconciliation window. Auto-clear scans unreconciled splits and looks for a unique combination whose cleared balance matches the reconciliation balance entered. The auto-clear tests all combinations of splits, therefore its runtime is potentially high; but limited in reconciliation to 1 second. When a unique match is not available, because the balance cannot be reached, or due to timeout, or multiple combinations are possible, auto-clear is not offered and the icon and its tooltip reflects the outcome.</property>
+                    <property name="halign">start</property>
+                    <property name="use-underline">False</property>
+                    <property name="draw-indicator">True</property>
+                  </object>
+                  <packing>
+                    <property name="left-attach">0</property>
+                    <property name="top-attach">14</property>
+                  </packing>
+                </child>
+                <child>
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">14</property>
+                    <property name="top-attach">15</property>
                   </packing>
                 </child>
                 <child>
@@ -2744,7 +2809,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">15</property>
+                    <property name="top-attach">16</property>
                   </packing>
                 </child>
                 <child>
@@ -2762,7 +2827,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">16</property>
+                    <property name="top-attach">17</property>
                   </packing>
                 </child>
                 <child>
@@ -2780,7 +2845,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">17</property>
+                    <property name="top-attach">18</property>
                   </packing>
                 </child>
                 <child>
@@ -2798,7 +2863,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">18</property>
+                    <property name="top-attach">19</property>
                   </packing>
                 </child>
                 <child>
@@ -2816,7 +2881,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">19</property>
+                    <property name="top-attach">20</property>
                   </packing>
                 </child>
                 <child>
@@ -2826,7 +2891,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">20</property>
+                    <property name="top-attach">21</property>
                   </packing>
                 </child>
                 <child>
@@ -2835,13 +2900,13 @@ many months before the current month</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Layout</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">21</property>
+                    <property name="top-attach">22</property>
                   </packing>
                 </child>
                 <child>
@@ -2859,7 +2924,7 @@ many months before the current month</property>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
-                    <property name="top-attach">22</property>
+                    <property name="top-attach">23</property>
                   </packing>
                 </child>
               </object>
@@ -2892,7 +2957,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Default Style&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Default Style</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -2915,7 +2983,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Other Defaults&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Other Defaults</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3169,7 +3240,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Default Report Currency&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Default Report Currency</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3192,7 +3266,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Location&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Location</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3237,9 +3314,9 @@ many months before the current month</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Default zoom level</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>
@@ -3371,7 +3448,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Window Geometry&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Window Geometry</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3442,7 +3522,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Tab Position&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Tab Position</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3531,7 +3614,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Summary Bar Position&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Summary Bar Position</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3592,7 +3678,10 @@ many months before the current month</property>
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
-                    <property name="label" translatable="yes">&lt;b&gt;Tabs&lt;/b&gt;</property>
+                    <property name="label" translatable="yes">Tabs</property>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                     <property name="use-markup">True</property>
                   </object>
                   <packing>
@@ -3793,9 +3882,9 @@ many months before the current month</property>
                     <property name="can-focus">False</property>
                     <property name="halign">start</property>
                     <property name="label" translatable="yes">Online Quotes</property>
-                    <attributes>
-                      <attribute name="weight" value="bold"/>
-                    </attributes>
+                    <style>
+                      <class name="gnc-class-strong"/>
+                    </style>
                   </object>
                   <packing>
                     <property name="left-attach">0</property>

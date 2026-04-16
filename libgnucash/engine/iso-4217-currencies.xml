@@ -351,7 +351,8 @@
   local-symbol="fr."
 />
 <!-- "BGL" - "Bulgarian Lev A/99"
-  1999-07-05 "BGN" 1000
+     Pegged 1000 to 1 DEM 1997-1999 
+     1999-07-05 "BGN" 1000
 -->
 <currency
   isocode="BGL"
@@ -365,7 +366,8 @@
   local-symbol=""
 />
 <!-- "BGN" - "Bulgarian Lev"
-  scheduled replacement: 2012-01-01 "EUR" 1.95583 (=DEM)
+    Pegged 1.95583 to 1 EUR 1999-2026
+    Admitted to Euro-zone 1 Jan 2026
 -->
 <currency
   isocode="BGN"
@@ -643,7 +645,7 @@
   exchange-code="756"
   parts-per-unit="100"
   smallest-fraction="100"
-  local-symbol="SFr."
+  local-symbol="Fr."
 />
 <!-- "CHW" - "WIR Franc"
   complementary currency by WIR Wirtschaftsring-Genossenschaft
@@ -1454,7 +1456,7 @@
   namespace="ISO4217"
   exchange-code="410"
   parts-per-unit="1"
-  smallest-fraction="100"
+  smallest-fraction="1"
   local-symbol="₩"
 />
 <!-- "KWD" - "Kuwaiti Dinar"

@@ -52,6 +52,11 @@ G_DEFINE_TYPE (GncHeader, gnc_header, GTK_TYPE_LAYOUT)
 static void
 gnc_header_draw_offscreen (GncHeader *header)
 {
+    g_return_if_fail (GTK_IS_WIDGET(header));
+
+    if (!gtk_widget_get_realized (GTK_WIDGET(header)))
+        return;
+
     SheetBlockStyle *style = header->style;
     GncItemEdit *item_edit = GNC_ITEM_EDIT(header->sheet->item_editor);
     Table *table = header->sheet->table;

@@ -31,6 +31,7 @@ static const std::map<std::string,double> gnc_euro_rates =
 {
     { "ATS",  13.7603 },  /* austrian schilling */
     { "BEF",  40.3399 },  /* belgian franc */
+    { "BGN",  1.95583 },  /* Bulgarian lev */
     { "CYP",  .585274 },  /* cyprus pound */
     { "DEM",  1.95583 },  /* german mark */
     { "EEK",  15.6466 },  /* Estonian Kroon */

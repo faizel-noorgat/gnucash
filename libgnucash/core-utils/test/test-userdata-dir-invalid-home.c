@@ -85,6 +85,7 @@ main(G_GNUC_UNUSED int argc, G_GNUC_UNUSED char **argv)
      * directory in that case. */
     g_setenv("HOME", homedir, TRUE);
     g_setenv("GNC_DATA_HOME", testdatahome, TRUE);
+    g_setenv("XDG_DATA_HOME", "", TRUE);
     g_free (homedir);
     g_free (testdatahome);
 

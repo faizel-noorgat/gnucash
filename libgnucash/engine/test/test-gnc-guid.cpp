@@ -29,7 +29,11 @@
 #include <iomanip>
 #include <string>
 #include <iostream>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcpp"
 #include <gtest/gtest.h>
+#pragma GCC diagnostic pop
+
 
 TEST (GncGUID, creation)
 {
@@ -69,17 +73,14 @@ TEST (GncGUID, from_string)
 
     guid = gnc::GUID::create_random ();
     std::string bogus {"Have a great big roast beef sandwich, if you please!"};
-    bool fail = false;
-    try
-    {
-        gnc::GUID::from_string (bogus);
-    }
-    catch (gnc::guid_syntax_exception const &)
-    {
-        fail = true;
-    }
+    EXPECT_THROW (gnc::GUID::from_string (bogus), gnc::guid_syntax_exception);
 
-    EXPECT_TRUE (fail) << "Parsing the bogus string should throw";
+    std::string test1 {"0123456789abcdef0123456789abcdef"};
+    auto guid1 = gnc::GUID::from_string (test1);
+    EXPECT_EQ (test1, guid1.to_string());
+
+    std::string test2 {"0123456789abcdef0123456789abcdeg"};
+    EXPECT_THROW (gnc::GUID::from_string (test2), gnc::guid_syntax_exception);
 }
 
 TEST (GncGUID, round_trip)

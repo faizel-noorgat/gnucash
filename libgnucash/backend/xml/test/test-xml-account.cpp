@@ -88,28 +88,21 @@ node_and_account_equal (xmlNodePtr node, Account* act)
         }
         else if (g_strcmp0 ((char*)mark->name, "act:type") == 0)
         {
-            gchar* txt;
             GNCAccountType type;
 
-            txt = dom_tree_to_text (mark);
+            auto txt = dom_tree_to_text (mark);
 
             if (!txt)
             {
                 return g_strdup ("couldn't get type string");
             }
-            else if (!xaccAccountStringToType (txt, &type))
+            else if (!xaccAccountStringToType (txt->c_str(), &type))
             {
-                g_free (txt);
                 return g_strdup ("couldn't convert type string to int");
             }
             else if (type != xaccAccountGetType (act))
             {
-                g_free (txt);
                 return g_strdup ("types differ");
-            }
-            else
-            {
-                g_free (txt);
             }
         }
         else if (g_strcmp0 ((char*)mark->name, "act:commodity") == 0)

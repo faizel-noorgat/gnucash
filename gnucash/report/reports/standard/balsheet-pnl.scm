@@ -361,6 +361,9 @@ also show overall period profit & loss."))
                              (gnc:make-html-table-cell/size
                               1 (if disable-account-indent? 1 (- maxindent indent))
                               label)))
+           ;; ensure the account name cell doesn't wrap
+           (_ (gnc:html-table-cell-set-style! account-cell "text-cell"
+                                              'attribute '("style" "white-space:nowrap;")))
            (row (append
                  (if disable-account-indent?
                      '()
@@ -737,9 +740,10 @@ also show overall period profit & loss."))
            accounts-cols-data))
 
          ;; generate an exchange-fn
-         (exchange-fn (gnc:case-exchange-time-fn price-source common-currency
-                                                 (gnc:accounts-get-commodities accounts #f)
-                                                 #f #f #f))
+         (exchange-fn (and common-currency
+                           (gnc:case-exchange-time-fn price-source common-currency
+                                                      (gnc:accounts-get-commodities accounts #f)
+                                                      #f #f #f)))
 
          ;; from col-idx, find effective date to retrieve pricedb
          ;; entry or to limit transactions to calculate average-cost
@@ -775,7 +779,8 @@ also show overall period profit & loss."))
          ;; missing price, say so.
          (get-exchange-rates-fn
           (lambda (accounts col-idx)
-            (let ((commodities (gnc:accounts-get-commodities accounts common-currency))
+            (let ((commodities (gnc:accounts-get-commodities-sorted
+                                accounts common-currency))
                   (cell (gnc:make-html-text)))
               (for-each
                (lambda (commodity)
@@ -859,8 +864,7 @@ also show overall period profit & loss."))
              (display report-title)
              (display " ")
              (if (or (not (eq? incr 'disabled)) (eq? report-type 'pnl))
-                 (format #t (G_ "~a to ~a")
-                         (qof-print-date startdate) (qof-print-date enddate))
+                 (display (gnc-date-interval-format startdate enddate))
                  (display (qof-print-date enddate))))))
 
     (if (eq? (get-option gnc:pagename-general optname-options-summary) 'always)

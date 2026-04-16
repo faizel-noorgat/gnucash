@@ -145,19 +145,6 @@ struct customer_pdata
     QofBook* book;
 };
 
-static gboolean
-set_string (xmlNodePtr node, GncCustomer* cust,
-            void (*func) (GncCustomer* cust, const char* txt))
-{
-    char* txt = dom_tree_to_text (node);
-    g_return_val_if_fail (txt, FALSE);
-
-    func (cust, txt);
-
-    g_free (txt);
-
-    return TRUE;
-}
 
 static gboolean
 set_boolean (xmlNodePtr node, GncCustomer* cust,
@@ -178,19 +165,18 @@ customer_name_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
 
-    return set_string (node, pdata->customer, gncCustomerSetName);
+    return apply_xmlnode_text (gncCustomerSetName, pdata->customer, node);
 }
 
 static gboolean
 customer_guid_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
-    GncGUID* guid;
     GncCustomer* cust;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    cust = gncCustomerLookup (pdata->book, guid);
+    cust = gncCustomerLookup (pdata->book, &*guid);
     if (cust)
     {
         gncCustomerDestroy (pdata->customer);
@@ -199,10 +185,8 @@ customer_guid_handler (xmlNodePtr node, gpointer cust_pdata)
     }
     else
     {
-        gncCustomerSetGUID (pdata->customer, guid);
+        gncCustomerSetGUID (pdata->customer, &*guid);
     }
-
-    guid_free (guid);
 
     return TRUE;
 }
@@ -212,7 +196,7 @@ customer_id_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
 
-    return set_string (node, pdata->customer, gncCustomerSetID);
+    return apply_xmlnode_text (gncCustomerSetID, pdata->customer, node);
 }
 
 static gboolean
@@ -220,21 +204,19 @@ customer_notes_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
 
-    return set_string (node, pdata->customer, gncCustomerSetNotes);
+    return apply_xmlnode_text (gncCustomerSetNotes, pdata->customer, node);
 }
 
 static gboolean
 customer_terms_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
-    GncGUID* guid;
     GncBillTerm* term;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    term = gnc_billterm_xml_find_or_create (pdata->book, guid);
+    term = gnc_billterm_xml_find_or_create (pdata->book, &*guid);
     g_assert (term);
-    guid_free (guid);
     gncCustomerSetTerms (pdata->customer, term);
 
     return TRUE;
@@ -262,20 +244,13 @@ static gboolean
 customer_taxincluded_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
-    GncTaxIncluded type;
-    char* str;
-    gboolean ret;
-
-    str = dom_tree_to_text (node);
-    g_return_val_if_fail (str, FALSE);
-
-    ret = gncTaxIncludedStringToType (str, &type);
-    g_free (str);
-
-    if (ret)
-        gncCustomerSetTaxIncluded (pdata->customer, type);
-
-    return ret;
+    auto set_tax_included = [](GncCustomer* cust, const char *str)
+    {
+        GncTaxIncluded type;
+        if (gncTaxIncludedStringToType (str, &type))
+            gncCustomerSetTaxIncluded (cust, type);
+    };
+    return apply_xmlnode_text (set_tax_included, pdata->customer, node);
 }
 
 static gboolean
@@ -321,24 +296,22 @@ static gboolean
 customer_taxtable_handler (xmlNodePtr node, gpointer cust_pdata)
 {
     struct customer_pdata* pdata = static_cast<decltype (pdata)> (cust_pdata);
-    GncGUID* guid;
     GncTaxTable* taxtable;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    taxtable = gncTaxTableLookup (pdata->book, guid);
+    taxtable = gncTaxTableLookup (pdata->book, &*guid);
     if (!taxtable)
     {
         taxtable = gncTaxTableCreate (pdata->book);
         gncTaxTableBeginEdit (taxtable);
-        gncTaxTableSetGUID (taxtable, guid);
+        gncTaxTableSetGUID (taxtable, &*guid);
         gncTaxTableCommitEdit (taxtable);
     }
     else
         gncTaxTableDecRef (taxtable);
 
     gncCustomerSetTaxTable (pdata->customer, taxtable);
-    guid_free (guid);
     return TRUE;
 }
 

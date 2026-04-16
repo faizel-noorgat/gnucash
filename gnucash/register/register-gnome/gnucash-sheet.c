@@ -2446,6 +2446,15 @@ gnucash_sheet_tooltip (GtkWidget  *widget, gint x, gint y,
     return TRUE;
 }
 
+static void
+dimensions_destroy (BlockDimensions *dimensions)
+{
+    if (dimensions)
+    {
+        g_table_destroy (dimensions->cell_dimensions);
+        g_free (dimensions);
+    }
+}
 
 GtkWidget *
 gnucash_sheet_new (Table *table)
@@ -2468,7 +2477,7 @@ gnucash_sheet_new (Table *table)
     /* some register data */
     sheet->dimensions_hash_table = g_hash_table_new_full (g_int_hash,
                                    g_int_equal,
-                                   g_free, g_free);
+                                   g_free, (GDestroyNotify)dimensions_destroy);
 
     /* add tooltips to sheet */
     gtk_widget_set_has_tooltip (GTK_WIDGET(sheet), TRUE);

@@ -28,10 +28,13 @@
 #include "gnc-commodity.h"
 #include "qof.h"
 #include "gnc-budget.h"
+#include <optional>
 
 #include "gnc-xml-helper.h"
 
-GncGUID* dom_tree_to_guid (xmlNodePtr node);
+std::optional<GncGUID> dom_tree_to_guid (xmlNodePtr node);
+
+std::string gnc_strstrip (std::string_view sv);
 
 gnc_commodity* dom_tree_to_commodity_ref (xmlNodePtr node, QofBook* book);
 gnc_commodity* dom_tree_to_commodity_ref_no_engine (xmlNodePtr node, QofBook*);
@@ -43,7 +46,8 @@ time64 dom_tree_to_time64 (xmlNodePtr node);
 gboolean dom_tree_valid_time64 (time64 ts, const xmlChar* name);
 GDate* dom_tree_to_gdate (xmlNodePtr node);
 gnc_numeric dom_tree_to_gnc_numeric (xmlNodePtr node);
-gchar* dom_tree_to_text (xmlNodePtr tree);
+std::optional<std::string> dom_tree_to_text (xmlNodePtr tree);
+const char* dom_node_to_text (xmlNodePtr node) noexcept;
 gboolean string_to_binary (const gchar* str,  void** v, guint64* data_len);
 gboolean dom_tree_create_instance_slots (xmlNodePtr node, QofInstance* inst);
 
@@ -68,6 +72,36 @@ struct dom_tree_handler
     int required;
     int gotten;
 };
+
+template <typename T, typename F,
+          std::enable_if_t<std::is_invocable_r_v<void, F, const char*>, int> = 0>
+inline T
+apply_xmlnode_text (F&& f, xmlNodePtr node, T default_val = T{})
+{
+    if (!node)
+        return default_val;
+
+    if (auto txt = dom_node_to_text(node))
+        return f(txt);
+
+    if (auto txt = dom_tree_to_text(node))
+        return f(txt->c_str());
+
+    return default_val;
+}
+
+template <typename Obj, typename F,
+          std::enable_if_t<std::is_invocable_r_v<void, F, Obj*, const char*>, int> = 0>
+inline bool
+apply_xmlnode_text (F&& f, Obj* obj, xmlNodePtr node)
+{
+    auto set_str = [&](auto txt)
+    {
+        f (obj, txt);
+        return true;
+    };
+    return apply_xmlnode_text<bool> (set_str, node, false);
+}
 
 gboolean dom_tree_generic_parse (xmlNodePtr node,
                                  struct dom_tree_handler* handlers,

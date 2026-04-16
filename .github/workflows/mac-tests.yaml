@@ -9,7 +9,7 @@ jobs:
       TZ: America/Los_Angeles
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: configure Environment
       run: |
         echo "PATH=$HOME/gnucash/inst/bin:$PATH" >> $GITHUB_ENV
@@ -20,8 +20,9 @@ jobs:
       uses: carlosperate/download-file-action@v2
       id: dependencies
       with:
-        file-url: 'https://downloads.sourceforge.net/gnucash/Dependencies/gnucash-5.6-mac-dependencies.tar.xz'
+        file-url: 'https://downloads.sourceforge.net/gnucash/Dependencies/gnucash-5.13-mac-dependencies.tar.xz'
         file-name: gnucash-dependencies.tar.xz
+        sha256: '51bae6f0ff384bbcb1547e21553398a0a399ca1f5f2f517b8de5cd2316464760'
     - name: download googletest
       uses: carlosperate/download-file-action@v2
 
@@ -42,7 +43,7 @@ jobs:
       run: |
         mkdir $HOME/gnucash/build
         cd $HOME/gnucash/build
-        cmake -GNinja -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_PREFIX_PATH=$PREFIX -DWITH_PYTHON=ON -DGTEST_ROOT=$SRCROOT/googletest $GITHUB_WORKSPACE
+        cmake -GNinja -DPKG_CONFIG_EXECUTABLE=$PREFIX/bin/pkgconf -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_PREFIX_PATH=$PREFIX -DWITH_PYTHON=ON -DGTEST_ROOT=$SRCROOT/googletest $GITHUB_WORKSPACE
     - name: Build and Test GnuCash
       run: |
         cd $HOME/gnucash/build
@@ -50,7 +51,7 @@ jobs:
         ninja check
       env:
         CTEST_OUTPUT_ON_FAILURE: On
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       if: failure()
       with:
         name: TestLog

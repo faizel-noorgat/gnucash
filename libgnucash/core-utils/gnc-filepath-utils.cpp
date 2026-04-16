@@ -487,12 +487,11 @@ get_user_data_dir ()
     wchar_t path[MAX_PATH+1];
     HRESULT hr;
     LPITEMIDLIST pidl = NULL;
-    BOOL b;
 
     hr = SHGetSpecialFolderLocation (NULL, CSIDL_APPDATA, &pidl);
     if (hr == S_OK)
     {
-        b = SHGetPathFromIDListW (pidl, path);
+        [[maybe_unused]] auto b = SHGetPathFromIDListW (pidl, path);
         CoTaskMemFree (pidl);
     }
     bfs::path retval(path, cvt);
@@ -1313,8 +1312,8 @@ gnc_list_all_paths ()
         gnc_filepath_init ();
 
     return {
-        { "GNC_USERDATA_DIR", gnc_userdata_home_str.c_str(), true},
-        { "GNC_USERCONFIG_DIR", gnc_userconfig_home_str.c_str(), true },
+        { "GNC_DATA_HOME", gnc_userdata_home_str.c_str(), true},
+        { "GNC_CONFIG_HOME", gnc_userconfig_home_str.c_str(), true },
         { "GNC_BIN", g_getenv ("GNC_BIN"), false },
         { "GNC_LIB", g_getenv ("GNC_LIB"), false },
         { "GNC_CONF", g_getenv ("GNC_CONF"), false },

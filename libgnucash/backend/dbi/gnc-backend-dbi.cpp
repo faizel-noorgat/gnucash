@@ -976,8 +976,8 @@ GncDbiBackend<Type>::safe_sync (QofBook* book)
         LEAVE ("Failed to create new database tables");
         return;
     }
-    conn->table_operation (TableOpType::drop_backup);
     conn->commit_transaction();
+    conn->table_operation (TableOpType::drop_backup);
     LEAVE ("book=%p", m_book);
 }
 /* MySQL commits the transaction and all savepoints after the first CREATE
@@ -1096,7 +1096,10 @@ gnc_module_init_backend_dbi (void)
     {
 #if HAVE_LIBDBI_R
         if (dbi_instance)
-            return;
+        {
+            dbi_shutdown_r (dbi_instance);
+            dbi_instance = nullptr;
+        }
 #endif
         gchar *libdir = gnc_path_get_libdir ();
         gchar *dir = g_build_filename (libdir, "dbd", nullptr);

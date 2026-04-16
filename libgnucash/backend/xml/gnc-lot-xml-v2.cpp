@@ -82,13 +82,10 @@ static gboolean
 lot_id_handler (xmlNodePtr node, gpointer p)
 {
     struct lot_pdata* pdata = static_cast<decltype (pdata)> (p);
-    GncGUID* guid;
 
     ENTER ("(lot=%p)", pdata->lot);
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     gnc_lot_set_guid (pdata->lot, *guid);
-
-    guid_free (guid);
 
     LEAVE ("");
     return TRUE;

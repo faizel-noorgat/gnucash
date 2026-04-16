@@ -85,40 +85,26 @@ gnc_budget_dom_tree_create (GncBudget* bgt)
 }
 
 /***********************************************************************/
-static inline gboolean
-set_string (xmlNodePtr node, GncBudget* bgt,
-            void (*func) (GncBudget* bgt, const gchar* txt))
-{
-    gchar* txt = dom_tree_to_text (node);
-    g_return_val_if_fail (txt, FALSE);
-
-    func (bgt, txt);
-    g_free (txt);
-    return TRUE;
-}
 
 static gboolean
 budget_id_handler (xmlNodePtr node, gpointer bgt)
 {
-    GncGUID* guid;
-
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    qof_instance_set_guid (QOF_INSTANCE (bgt), guid);
-    guid_free (guid);
+    qof_instance_set_guid (QOF_INSTANCE (bgt), &*guid);
     return TRUE;
 }
 
 static gboolean
 budget_name_handler (xmlNodePtr node, gpointer bgt)
 {
-    return set_string (node, GNC_BUDGET (bgt), gnc_budget_set_name);
+    return apply_xmlnode_text (gnc_budget_set_name, GNC_BUDGET (bgt), node);
 }
 
 static gboolean
 budget_description_handler (xmlNodePtr node, gpointer bgt)
 {
-    return set_string (node, GNC_BUDGET (bgt), gnc_budget_set_description);
+    return apply_xmlnode_text (gnc_budget_set_description, GNC_BUDGET (bgt), node);
 }
 
 static gboolean

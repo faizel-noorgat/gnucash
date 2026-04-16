@@ -1265,13 +1265,15 @@ gnc_ui_commodity_dialog_to_object(CommodityWindow * w)
             else
                 gnc_commodity_set_quote_tz(c, nullptr);
 
-	    gnc_commodity_set_user_symbol(c, user_symbol);
+            gnc_commodity_set_user_symbol(c, user_symbol);
 
             gnc_commodity_commit_edit(c);
+            g_free (name_space);
             return TRUE;
         }
         gnc_warning_dialog (GTK_WINDOW (w->dialog), "%s",
                             _("You may not create a new national currency."));
+        g_free (name_space);
         return FALSE;
     }
 
@@ -1283,6 +1285,7 @@ gnc_ui_commodity_dialog_to_object(CommodityWindow * w)
         gnc_warning_dialog (GTK_WINDOW (w->dialog),
                             _("%s is a reserved commodity type."
                             " Please use something else."), GNC_COMMODITY_NS_TEMPLATE);
+        g_free (name_space);
         return FALSE;
     }
 

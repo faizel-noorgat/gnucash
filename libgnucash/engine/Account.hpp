@@ -44,7 +44,7 @@ const SplitsVec& xaccAccountGetSplits (const Account*);
 
 void gnc_account_foreach_descendant (const Account *, std::function<void(Account*)> func);
 
-void gnc_account_foreach_split (const Account*, std::function<void(Split*)>, bool);
+void gnc_account_foreach_split (const Account*, std::function<void(Split*)>);
 
 void gnc_account_foreach_split_until_date (const Account *acc, time64 end_date,
                                            std::function<void(Split*)> f);

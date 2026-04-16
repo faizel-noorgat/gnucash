@@ -455,7 +455,6 @@
 
                   ;; rebalance and commit everything
                   (xaccTransCommitEdit gnc-xtn)
-                  (format #t "transaction splits ~s~%" (qif-xtn:splits xtn))
                   (xaccTransRecordPrice gnc-xtn PRICE-SOURCE-SPLIT-IMPORT)))))
           (qif-file:xtns qif-file)))
        sorted-qif-files-list)

@@ -167,19 +167,22 @@
 ;; section, name, and value of the function.
 (define (gnc:make-report-anchor reportname src-report
                                 optionlist)
-  (let ((src-options (gnc:report-options src-report))
-        (options (gnc:make-report-options reportname)))
-    (if options
-        (begin
-          (gnc:options-copy-values src-options options)
-          (for-each
-           (lambda (l)
-             (gnc-set-option (gnc:optiondb options) (car l) (cadr l) (caddr l)))
-           optionlist)
-          (let ((id (gnc:make-report reportname options)))
-            (gnc:report-anchor-text id)))
-        (warn "gnc:make-report-anchor: No such report: " reportname))))
+  (let ((anchor-id (gnc:report-add-anchor!
+                    src-report (list reportname (gnc:report-options src-report) optionlist))))
+    (gnc-build-url URL-TYPE-REPORT (format #f "id=~a|~a" (gnc:report-id src-report) anchor-id) "")))
 
+(define-public (gnc:report-get-linked-report src-id id)
+  (match (gnc:report-get-anchor (gnc-report-find src-id) id)
+    ((reportname src-options optionlist)
+     (let* ((options (gnc:make-report-options reportname))
+            (db (gnc:optiondb options)))
+       (cond
+        (options
+         (gnc:options-copy-values src-options options)
+         (for-each (lambda (l) (apply gnc-set-option db l)) optionlist)
+         (gnc:make-report reportname options))
+        (else (gnc:error "cannot find temport template " reportname) #f))))
+    (_ (gnc:error "invalid src-id " src-id " id " id) #f)))
 
 ;; returns the account name as html-text and anchor to the register.
 (define (gnc:html-account-anchor acct)
@@ -254,7 +257,7 @@
 (define (gnc:html-make-rates-table currency price-fn accounts)
   (define (cell c) (gnc:make-html-table-cell/markup "number-cell" c))
   (define table (gnc:make-html-table))
-  (let lp ((comm-list (gnc:accounts-get-commodities accounts currency)) (entries 0))
+  (let lp ((comm-list (gnc:accounts-get-commodities-sorted accounts currency)) (entries 0))
     (match comm-list
       (()
        (unless (zero? entries)

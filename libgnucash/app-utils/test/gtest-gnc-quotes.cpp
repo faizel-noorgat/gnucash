@@ -38,8 +38,10 @@ gnc_default_currency(void)
     return gnc_commodity_table_lookup(table, GNC_COMMODITY_NS_CURRENCY, "USD");
 }
 }
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcpp"
 #include <gtest/gtest.h>
+#pragma GCC diagnostic pop
 #include "../gnc-quotes.cpp"
 
 class GncMockQuoteSource final : public GncQuoteSource
@@ -376,7 +378,7 @@ TEST_F(GncQuotesTest, no_date)
     auto datetime{static_cast<time64>(GncDateTime())};
 
     EXPECT_EQ(usd, gnc_price_get_currency(price));
-    EXPECT_EQ(datetime, gnc_price_get_time64(price));
+    EXPECT_TRUE (abs(datetime - gnc_price_get_time64(price)) <= 1);
     EXPECT_EQ(PRICE_SOURCE_FQ, gnc_price_get_source(price));
     EXPECT_TRUE(gnc_numeric_equal(GncNumeric{1337, 100},
                                   gnc_price_get_value(price)));

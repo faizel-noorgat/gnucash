@@ -171,15 +171,18 @@ set_commodity_value (xmlNodePtr node, gnc_commodity* com)
     {
         struct com_char_handler* mark;
 
+        auto call_commodity_handler = [&](gnc_commodity* com, const char* txt)
+        {
+            auto val = gnc_strstrip (txt);
+            (mark->func) (com, val.c_str());
+        };
+
         for (mark = com_handlers; mark->tag; mark++)
         {
             if (g_strcmp0 (mark->tag, (char*)node->name) == 0)
             {
-                gchar* val = dom_tree_to_text (node);
-                g_strstrip (val);
-                (mark->func) (com, val);
-                g_free (val);
-                break;
+                if (apply_xmlnode_text (call_commodity_handler, com, node))
+                    break;
             }
         }
     }

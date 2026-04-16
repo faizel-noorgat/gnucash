@@ -114,11 +114,9 @@ static gboolean
 book_id_handler (xmlNodePtr node, gpointer book_pdata)
 {
     QofBook* book = static_cast<decltype (book)> (book_pdata);
-    GncGUID* guid;
 
-    guid = dom_tree_to_guid (node);
-    qof_instance_set_guid (QOF_INSTANCE (book), guid);
-    guid_free (guid);
+    auto guid = dom_tree_to_guid (node);
+    qof_instance_set_guid (QOF_INSTANCE (book), &*guid);
 
     return TRUE;
 }

@@ -25,7 +25,6 @@
  *                                                                  *
 \********************************************************************/
 
-#define __EXTENSIONS__
 #include <glib.h>
 
 #include <config.h>
@@ -46,6 +45,8 @@
 
 #include <cinttypes>
 #include <unicode/calendar.h>
+#include "unicode/dtitvfmt.h"
+#include "unicode/smpdtfmt.h"
 
 #include "gnc-date.h"
 #include "gnc-date-p.h"
@@ -240,7 +241,7 @@ gnc_timegm (struct tm* time)
         *time = static_cast<struct tm>(gncdt);
         time->tm_sec -= gncdt.offset();
         normalize_struct_tm(time);
-#ifdef HAVE_STRUcT_TM_GMTOFF
+#ifdef HAVE_STRUCT_TM_GMTOFF
         time->tm_gmtoff = 0;
 #endif
         return static_cast<time64>(gncdt) - gncdt.offset();
@@ -408,7 +409,7 @@ time64CanonicalDayTime (time64 t)
     return gnc_mktime (&tm);
 }
 
-/* NB: month is 1-12, year is 0001 - 9999. */
+/* NB: month is 0-11, year is 0001 - 9999. */
 int gnc_date_get_last_mday (int month, int year)
 {
     static int last_day_of_month[12] =
@@ -612,6 +613,71 @@ qof_print_date (time64 t)
     memset (buff, 0, sizeof (buff));
     qof_print_date_buff (buff, MAX_DATE_LENGTH, t);
     return g_strdup (buff);
+}
+
+static icu::DateIntervalFormat*
+get_icu_date_interval_formatter ()
+{
+    static std::unique_ptr<icu::DateIntervalFormat> difmt;
+    if (!difmt)
+    {
+        auto locale = icu::Locale::getDefault();
+        UErrorCode status = U_ZERO_ERROR;
+        difmt.reset(icu::DateIntervalFormat::createInstance(UDAT_YEAR_NUM_MONTH_DAY, locale, status));
+        if (U_FAILURE(status))
+        {
+            PWARN ("icu::DateIntervalFormat::createInstance error %d", status);
+            return nullptr;
+        }
+    }
+    return difmt.get();
+}
+
+static gchar*
+icu_date_interval_format (time64 from_date, time64 to_date)
+{
+    auto difmt = get_icu_date_interval_formatter();
+    if (!difmt)
+        return nullptr;
+
+    if (from_date > to_date)
+        std::swap(from_date, to_date);
+
+    icu::DateInterval interval (from_date * 1000.0, to_date * 1000.0);
+    icu::UnicodeString result;
+    icu::FieldPosition fp;
+    UErrorCode status = U_ZERO_ERROR;
+    difmt->format (&interval, result, fp, status);
+    if (U_FAILURE(status))
+    {
+        PWARN("Error formatting interval: %d", status);
+        return nullptr;
+    }
+
+    std::string interval_string;
+    result.toUTF8String(interval_string);
+
+    return g_strdup (interval_string.c_str());
+}
+
+gchar*
+gnc_date_interval_format (time64 from_date, time64 to_date)
+{
+    gchar* rv = nullptr;
+
+    if (qof_date_format_get() == QOF_DATE_FORMAT_LOCALE)
+        rv = icu_date_interval_format (from_date, to_date);
+
+    // not using locale, or icu failure
+    if (!rv)
+    {
+        gchar from_buff[MAX_DATE_LENGTH+1], to_buff[MAX_DATE_LENGTH+1];
+        qof_print_date_buff (from_buff, MAX_DATE_LENGTH, from_date);
+        qof_print_date_buff (to_buff, MAX_DATE_LENGTH, to_date);
+        rv = g_strdup_printf (gettext("%s to %s"), from_buff, to_buff);
+    }
+
+    return rv;
 }
 
 /* ============================================================== */
@@ -908,9 +974,16 @@ qof_scan_date_internal (const char *buff, int *day, int *month, int *year,
     if (iyear < 100)
         iyear += ((int) ((now_year + 50 - iyear) / 100)) * 100;
 
-    if (year) *year = iyear;
-    if (month) *month = imonth;
-    if (day) *day = iday;
+    /* Fix up any goofy dates */
+    struct tm tm{};
+    tm.tm_year = iyear - 1900;
+    tm.tm_mon = imonth - 1;
+    tm.tm_mday = iday;
+    normalize_struct_tm(&tm);
+
+    if (year) *year = tm.tm_year + 1900;
+    if (month) *month = tm.tm_mon + 1;
+    if (day) *day = tm.tm_mday;
     return(TRUE);
 }
 
@@ -1224,20 +1297,17 @@ GDate time64_to_gdate (time64 t)
 
 GDate* gnc_g_date_new_today ()
 {
-    GncDate gncd;
-    auto ymd = gncd.year_month_day();
-    auto month = static_cast<GDateMonth>(ymd.month);
-    auto result = g_date_new_dmy (ymd.day, month, ymd.year);
-    g_assert(g_date_valid (result));
-    return result;
+    GDate* rv = g_date_new ();
+    gnc_gdate_set_today (rv);
+    return rv;
 }
 
 void
 gnc_gdate_set_today (GDate* gd)
 {
-    GDate *today = gnc_g_date_new_today ();
-    g_date_set_julian (gd, g_date_get_julian (today));
-    g_date_free (today);
+    g_return_if_fail (gd != nullptr);
+    auto ymd = GncDate().year_month_day();
+    g_date_set_dmy (gd, ymd.day, static_cast<GDateMonth>(ymd.month), ymd.year);
 }
 
 void

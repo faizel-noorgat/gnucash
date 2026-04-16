@@ -852,6 +852,10 @@ button_press_cb (GtkWidget *widget, GdkEventButton *event, gpointer *pointer)
         }
         return TRUE;
     }
+
+    if (!gtk_widget_has_focus (GTK_WIDGET(sheet)))
+        gtk_widget_grab_focus (GTK_WIDGET(sheet));
+
     return FALSE;
 }
 

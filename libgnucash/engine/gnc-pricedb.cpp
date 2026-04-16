@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "gnc-date.h"
+#include "gnc-datetime.hpp"
 #include "gnc-pricedb-p.h"
 #include <qofinstance-p.h>
 
@@ -1590,19 +1591,15 @@ gnc_pricedb_remove_old_prices (GNCPriceDB *db, GList *comm_list,
           g_slist_length (data.list), datebuff);
 
     // Check for a valid fiscal end of year date
-    if (fiscal_end_date == nullptr)
+    if (fiscal_end_date == nullptr || !g_date_valid (fiscal_end_date))
     {
-        GDateYear year_now = g_date_get_year (gnc_g_date_new_today ());
-        fiscal_end_date = g_date_new ();
-        g_date_set_dmy (fiscal_end_date, 31, GDateMonth(12), year_now);
+        auto ymd = GncDate().year_month_day();
+        GDate end_this_year;
+        g_date_set_dmy (&end_this_year, 31, GDateMonth(12), ymd.year);
+        gnc_pricedb_process_removal_list (db, &end_this_year, data, keep);
     }
-    else if (g_date_valid (fiscal_end_date) == FALSE)
-    {
-        GDateYear year_now = g_date_get_year (gnc_g_date_new_today ());
-        g_date_clear (fiscal_end_date, 1);
-        g_date_set_dmy (fiscal_end_date, 31, GDateMonth(12), year_now);
-    }
-    gnc_pricedb_process_removal_list (db, fiscal_end_date, data, keep);
+    else
+        gnc_pricedb_process_removal_list (db, fiscal_end_date, data, keep);
 
     g_slist_free (data.list);
     LEAVE(" ");

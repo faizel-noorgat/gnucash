@@ -33,6 +33,7 @@
 #include <config.h>
 
 #include <string.h>
+#include <stdbool.h>
 #include <gdk/gdkkeysyms.h>
 
 #include "completioncell.h"
@@ -43,6 +44,7 @@
 #include "gnucash-sheetP.h"
 #include "table-allgui.h"
 #include "gnc-glib-utils.h"
+#include <gnc-unicode.h>
 
 typedef struct _PopBox
 {
@@ -63,7 +65,6 @@ typedef struct _PopBox
 
     gboolean      sort_enabled; // sort of list store enabled
     gboolean      register_is_reversed; // whether the register is reversed
-    gboolean      stop_searching; // set when there are no results
 
     gboolean      strict; // text entry must be in the list
     gboolean      in_list_select; // item selected in the list
@@ -118,8 +119,8 @@ gnc_completion_cell_init (CompletionCell* cell)
     box->sheet = NULL;
     box->item_edit = NULL;
     box->item_list = NULL;
-    box->item_store = gtk_list_store_new (4, G_TYPE_STRING, G_TYPE_STRING,
-                                             G_TYPE_INT, G_TYPE_INT);
+    box->item_store = NULL;
+
     box->signals_connected = FALSE;
     box->list_popped = FALSE;
     box->autosize = FALSE;
@@ -128,8 +129,6 @@ gnc_completion_cell_init (CompletionCell* cell)
     box->sort_enabled = FALSE;
 
     cell->cell.gui_private = box;
-
-    box->stop_searching = FALSE;
 
     box->strict = FALSE;
     box->in_list_select = FALSE;
@@ -327,14 +326,22 @@ gnc_completion_cell_gui_destroy (BasicCell* bcell)
 {
     CompletionCell* cell = (CompletionCell*) bcell;
 
-    if (cell->cell.gui_realize)
+    if (!cell->cell.gui_realize)
     {
         PopBox* box = bcell->gui_private;
-        if (box && box->item_list)
+        if (box)
         {
-            completion_disconnect_signals (cell);
-            g_object_unref (box->item_list);
-            box->item_list = NULL;
+            if (box->item_list)
+            {
+                completion_disconnect_signals (cell);
+                g_object_unref (box->item_list);
+                box->item_list = NULL;
+            }
+            if (box->item_store)
+            {
+                g_object_unref (box->item_store);
+                box->item_store = NULL;
+            }
         }
         /* allow the widget to be shown again */
         cell->cell.gui_realize = gnc_completion_cell_gui_realize;
@@ -416,14 +423,13 @@ item_store_clear (CompletionCell* cell)
     PopBox* box = cell->cell.gui_private;
 
     // disconnect list store from tree view
-    GtkListStore *store = gnc_item_list_disconnect_store (box->item_list);
+    gnc_item_list_disconnect_store (box->item_list);
 
     block_list_signals (cell);
 
     if (box->sort_enabled) // if sorting, disable it
         set_sort_column_enabled (box, FALSE);
 
-    box->stop_searching = FALSE;
     gtk_list_store_clear (box->item_store);
 
     if (box->sort_enabled) // if sorting, enable it
@@ -432,7 +438,7 @@ item_store_clear (CompletionCell* cell)
     unblock_list_signals (cell);
 
     // reconect list store to tree view
-    gnc_item_list_connect_store (box->item_list, store);
+    gnc_item_list_connect_store (box->item_list, box->item_store);
 
     hide_popup (box);
 }
@@ -511,18 +517,6 @@ list_store_append (GtkListStore *store, char* string,
                                       FOUND_LOCATION_COL, found_location, -1);
 }
 
-static char*
-normalize_and_fold (char* utf8_string)
-{
-    char *normalized = g_utf8_normalize (utf8_string, -1, G_NORMALIZE_NFC);
-    if (!normalized)
-        return NULL;
-
-    char *folded = g_utf8_casefold (normalized, -1);
-    g_free (normalized);
-    return folded;
-}
-
 static gint
 test_and_add (PopBox* box, const gchar *text, gint start_pos,
               gpointer key, gint occurrence_difference)
@@ -530,19 +524,15 @@ test_and_add (PopBox* box, const gchar *text, gint start_pos,
     gint ret_value = -1;
     gint text_length = g_utf8_strlen (text, -1);
 
-    if (start_pos > text_length)
+    if (start_pos >= text_length)
        return ret_value;
 
     gchar *sub_text = g_utf8_substring (text, start_pos, text_length);
-    gchar *sub_text_norm_fold = normalize_and_fold (sub_text);
-    gchar *found_text_ptr = g_strstr_len (sub_text_norm_fold, -1, box->newval);
-
-    if (found_text_ptr)
+    int pos = 0, len = 0;
+    if (gnc_unicode_has_substring_base_chars (box->newval, sub_text, &pos, &len))
     {
         gchar *markup = NULL, *prefix = NULL, *match = NULL, *suffix = NULL;
-        glong newval_length = g_utf8_strlen (box->newval, -1);
-        gulong found_location = g_utf8_pointer_to_offset (sub_text_norm_fold,
-                                                          found_text_ptr) + start_pos;
+        gint found_location = start_pos + pos;
         gboolean have_boundary = FALSE;
         gint prefix_length;
         gint weight;
@@ -554,18 +544,18 @@ test_and_add (PopBox* box, const gchar *text, gint start_pos,
 
         prefix_length = g_utf8_strlen (prefix, -1);
 
-        match = g_utf8_substring (text, found_location, found_location + newval_length);
+        match = g_utf8_substring (text, found_location, found_location + len);
 
-        if (found_location - start_pos >= 1)
+        if (pos >= 1)
         {
-            gunichar prev = g_utf8_get_char (g_utf8_offset_to_pointer (sub_text, found_location - start_pos - 1));
+            gunichar prev = g_utf8_get_char (g_utf8_offset_to_pointer (sub_text, pos - 1));
             if (prev && (g_unichar_isspace (prev) || g_unichar_ispunct (prev)))
                 have_boundary = TRUE;
             else
                 ret_value = found_location + 1;
         }
 
-        suffix = g_utf8_substring (text, found_location + newval_length, text_length);
+        suffix = g_utf8_substring (text, found_location + len, text_length);
 
         markup = g_markup_printf_escaped ("%s<b>%s</b>%s%s", prefix, match, suffix, " ");
 
@@ -573,7 +563,7 @@ test_and_add (PopBox* box, const gchar *text, gint start_pos,
         {
             weight = occurrence_difference; // sorted by recent first
 
-            if (g_strcmp0 (sub_text_norm_fold, box->newval) == 0) // exact match
+            if (gnc_unicode_compare_base_chars (sub_text, box->newval) == 0) // exact match
                 weight = 1;
 
             list_store_append (box->item_store, key, markup, weight, found_location);
@@ -583,7 +573,6 @@ test_and_add (PopBox* box, const gchar *text, gint start_pos,
         g_free (match);
         g_free (suffix);
     }
-    g_free (sub_text_norm_fold);
     g_free (sub_text);
     return ret_value;
 }
@@ -639,25 +628,22 @@ select_first_entry_in_list (PopBox* box)
 }
 
 static void
-populate_list_store (CompletionCell* cell, const gchar* str)
+populate_list_store (CompletionCell* cell, gchar* str)
 {
     PopBox* box = cell->cell.gui_private;
 
     box->in_list_select = FALSE;
     box->item_edit->popup_allocation_height = -1;
 
-    if (box->stop_searching)
-        return;
-
     if (str && *str)
-        box->newval = normalize_and_fold ((gchar*)str);
+        box->newval = g_strdup(str);
     else
         return;
 
     box->newval_len = g_utf8_strlen (str, -1);
 
     // disconnect list store from tree view
-    box->item_store = gnc_item_list_disconnect_store (box->item_list);
+    gnc_item_list_disconnect_store (box->item_list);
 
     block_list_signals (cell);
 
@@ -689,7 +675,6 @@ populate_list_store (CompletionCell* cell, const gchar* str)
     // if no entries, do not show popup
     if (gtk_tree_model_iter_n_children (GTK_TREE_MODEL(box->item_store), NULL) == 1)
     {
-        box->stop_searching = TRUE;
         hide_popup (box);
     }
     else
@@ -714,7 +699,6 @@ gnc_completion_cell_modify_verify (BasicCell* bcell,
 {
     CompletionCell* cell = (CompletionCell*) bcell;
     PopBox* box = cell->cell.gui_private;
-    glong newval_chars = g_utf8_strlen (newval, newval_len);
 
     if (box->in_list_select)
     {
@@ -725,14 +709,6 @@ gnc_completion_cell_modify_verify (BasicCell* bcell,
         *start_selection = 0;
         *end_selection = 0;
         return;
-    }
-
-    // check to enable searching
-    if (((*cursor_position < newval_chars) &&
-         (g_utf8_strlen (bcell->value, -1) < newval_chars)) ||
-         (g_utf8_strlen (bcell->value, -1) > newval_chars))
-    {
-         box->stop_searching = FALSE;
     }
 
     // Are were deleting or inserting in the middle.
@@ -852,6 +828,8 @@ gnc_completion_cell_gui_realize (BasicCell* bcell, gpointer data)
     /* initialize gui-specific, private data */
     box->sheet = sheet;
     box->item_edit = item_edit;
+    box->item_store = gtk_list_store_new (4, G_TYPE_STRING, G_TYPE_STRING,
+                                             G_TYPE_INT, G_TYPE_INT);
     box->item_list = GNC_ITEM_LIST(gnc_item_list_new (box->item_store));
 
     block_list_signals (cell);

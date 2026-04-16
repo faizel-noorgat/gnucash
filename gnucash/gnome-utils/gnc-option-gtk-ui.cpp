@@ -277,6 +277,7 @@ create_option_widget<GncOptionUIType::TEXT> (GncOption& option, GtkGrid *page_bo
     gtk_box_set_homogeneous (GTK_BOX (enclosing), FALSE);
     auto widget = gtk_text_view_new();
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(widget), GTK_WRAP_WORD);
+    gtk_widget_set_size_request(widget, 400, -1);
     gtk_text_view_set_editable(GTK_TEXT_VIEW(widget), TRUE);
     gtk_text_view_set_accepts_tab (GTK_TEXT_VIEW(widget), FALSE);
 

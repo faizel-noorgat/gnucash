@@ -443,7 +443,7 @@ _enabled_comparator (GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b, gpoint
 static void
 gnc_sx_list_tree_model_adapter_init (GncSxListTreeModelAdapter *adapter)
 {
-    adapter->orig = gtk_tree_store_new (5, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_STRING);
+  adapter->orig = gtk_tree_store_new (6, G_TYPE_STRING, G_TYPE_BOOLEAN, G_TYPE_STRING, G_TYPE_UINT, G_TYPE_STRING, G_TYPE_STRING);
     adapter->real = GTK_TREE_MODEL_SORT(gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL(adapter->orig)));
 
     // setup sorting
@@ -494,13 +494,15 @@ gsltma_populate_tree_store (GncSxListTreeModelAdapter *model)
     {
         GncSxInstances *instances = (GncSxInstances*)list->data;
         gchar *frequency_str;
-        char last_occur_date_buf[MAX_DATE_LENGTH+1];
+        char last_occur_date_buf[MAX_DATE_LENGTH + 1];
+        unsigned postponed_count;
         char next_occur_date_buf[MAX_DATE_LENGTH+1];
 
         frequency_str = recurrenceListToCompactString (gnc_sx_get_schedule (instances->sx));
 
         _format_conditional_date (xaccSchedXactionGetLastOccurDate (instances->sx),
                                   last_occur_date_buf, MAX_DATE_LENGTH);
+        postponed_count = g_list_length(gnc_sx_get_defer_instances (instances->sx));
         _format_conditional_date (&instances->next_instance_date,
                                   next_occur_date_buf, MAX_DATE_LENGTH);
 
@@ -509,6 +511,7 @@ gsltma_populate_tree_store (GncSxListTreeModelAdapter *model)
                             SXLTMA_COL_NAME, xaccSchedXactionGetName (instances->sx),
                             SXLTMA_COL_ENABLED, xaccSchedXactionGetEnabled (instances->sx),
                             SXLTMA_COL_FREQUENCY, frequency_str,
+                            SXLTMA_COL_NUM_POSTPONED, postponed_count,
                             SXLTMA_COL_LAST_OCCUR, last_occur_date_buf,
                             SXLTMA_COL_NEXT_OCCUR, next_occur_date_buf,
                             -1);

@@ -107,6 +107,10 @@ gnc_split_register_get_rbaln (VirtualLocation virt_loc, gpointer user_data,
         for (node = xaccTransGetSplitList (trans); node; node = node->next)
         {
             Split* secondary = node->data;
+
+            if (!xaccTransStillHasSplit (trans, secondary))
+              continue;
+
             i++;
 
             if (subaccounts)
@@ -433,6 +437,9 @@ gnc_split_register_get_tcredit_label (VirtualLocation virt_loc,
     SplitRegister* reg = user_data;
     SRInfo* info = gnc_split_register_get_info (reg);
 
+    if (reg->is_template)
+        return "";
+
     if (info->tcredit_str)
         return info->tcredit_str;
 
@@ -458,6 +465,9 @@ gnc_split_register_get_tdebit_label (VirtualLocation virt_loc,
     SplitRegister* reg = user_data;
     SRInfo* info = gnc_split_register_get_info (reg);
 
+    if (reg->is_template)
+        return "";
+
     if (info->tdebit_str)
         return info->tdebit_str;
 
@@ -479,6 +489,11 @@ static const char*
 gnc_split_register_get_tshares_label (VirtualLocation virt_loc,
                                       gpointer user_data)
 {
+    SplitRegister* reg = user_data;
+
+    if (reg->is_template)
+        return "";
+
     return _ ("Tot Shares");
 }
 
@@ -486,6 +501,11 @@ static const char*
 gnc_split_register_get_tbalance_label (VirtualLocation virt_loc,
                                        gpointer user_data)
 {
+    SplitRegister* reg = user_data;
+
+    if (reg->is_template)
+        return "";
+
     return _ ("Balance");
 }
 
@@ -2193,6 +2213,10 @@ gnc_split_register_confirm (VirtualLocation virt_loc, gpointer user_data)
         for (GList *node = xaccTransGetSplitList (trans); node; node = node->next)
         {
             Split* split = node->data;
+
+            if (!xaccTransStillHasSplit (trans, split))
+                continue;
+
             if (xaccSplitGetReconcile (split) == YREC)
             {
                 gchar* name = gnc_account_get_full_name (xaccSplitGetAccount (split));

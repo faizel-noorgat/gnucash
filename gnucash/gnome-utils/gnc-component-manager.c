@@ -820,6 +820,20 @@ gnc_gui_component_set_session (gint component_id, gpointer session)
 }
 
 void
+gnc_gui_component_reset_session (gpointer old_session, gpointer new_session)
+{
+    GList *node;
+
+    for (node = components; node; node = node->next)
+    {
+        ComponentInfo *ci = node->data;
+
+        if (ci->session == old_session)
+            ci->session = new_session;
+    }
+}
+
+void
 gnc_close_gui_component_by_session (gpointer session)
 {
     GList *list;

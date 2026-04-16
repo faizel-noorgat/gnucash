@@ -106,7 +106,7 @@ shared_quickfill_find_accounts (GtkTreeModel* model,
         {
             ref = gtk_tree_row_reference_new (model, path);
             data->refs = g_list_append (data->refs, ref);
-            data->accounts = g_list_remove_link (data->accounts, tmp);
+            data->accounts = g_list_delete_link (data->accounts, tmp);
             return (data->accounts == NULL);
         }
     }

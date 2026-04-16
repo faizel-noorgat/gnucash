@@ -135,21 +135,18 @@ fs_uift_handler (xmlNodePtr node, gpointer data)
 {
     fsParseData* fspd = static_cast<decltype (fspd)> (data);
     int            i;
-    char*        nodeTxt;
 
-    nodeTxt = dom_tree_to_text (node);
+    auto nodeTxt = dom_tree_to_text (node);
 
     g_return_val_if_fail (nodeTxt, FALSE);
     for (i = 0; uiFreqTypeStrs[i].str != NULL; i++)
     {
-        if (g_strcmp0 (nodeTxt, uiFreqTypeStrs[i].str) == 0)
+        if (g_strcmp0 (nodeTxt->c_str(), uiFreqTypeStrs[i].str) == 0)
         {
             fspd->uift = uiFreqTypeStrs[i].uift;
-            g_free (nodeTxt);
             return TRUE;
         }
     }
-    g_free (nodeTxt);
     return FALSE;
 }
 

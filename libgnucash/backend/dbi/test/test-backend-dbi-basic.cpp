@@ -83,6 +83,17 @@ typedef struct
     GSList* hdlrs;
 } Fixture;
 
+
+static char*
+normalize_path(char* path)
+{
+    g_return_val_if_fail(path, nullptr);
+    auto rv = gnc_uri_normalize_uri (path, FALSE);
+    g_free (path);
+    return rv;
+}
+
+
 static void
 setup (Fixture* fixture, gconstpointer pData)
 {
@@ -94,14 +105,17 @@ setup (Fixture* fixture, gconstpointer pData)
      * prevents creating the lock file. Force the session to get
      * around that.
      */
-    qof_session_begin (fixture->session, DBI_TEST_XML_FILENAME,
+    qof_session_begin (fixture->session,
+                       normalize_path (g_strdup (DBI_TEST_XML_FILENAME)),
                        SESSION_BREAK_LOCK);
     g_assert_cmpint (qof_session_get_error (fixture->session), == ,
                      ERR_BACKEND_NO_ERR);
     qof_session_load (fixture->session, NULL);
 
     if (g_strcmp0 (url, "sqlite3") == 0)
-        fixture->filename = g_strdup_printf ("/tmp/test-sqlite-%d", getpid ());
+        fixture->filename =
+            normalize_path (g_strdup_printf (TEMPDIR "/test-sqlite-%d",
+                                                    getpid ()));
     else
         fixture->filename = NULL;
 }
@@ -117,6 +131,7 @@ setup_memory (Fixture* fixture, gconstpointer pData)
     Split* spl1, *spl2;
     gnc_commodity_table* table;
     gnc_commodity* currency;
+    Time64 now{gnc_time(nullptr)};
 
     gnc_module_init_backend_dbi();
     root = gnc_book_get_root_account (book);
@@ -131,10 +146,10 @@ setup_memory (Fixture* fixture, gconstpointer pData)
     xaccAccountSetCommodity (acct1, currency);
 
     auto frame = qof_instance_get_slots (QOF_INSTANCE (acct1));
-    frame->set ({"int64-val"}, new KvpValue (INT64_C (100)));
+    frame->set ({"int64-val"}, new KvpValue (INT64_C (2148634028)));
     frame->set ({"double-val"}, new KvpValue (3.14159));
     frame->set ({"numeric-val"}, new KvpValue (gnc_numeric_zero ()));
-    frame->set ({"time-val"}, new KvpValue (gnc_time(nullptr)));
+    frame->set ({"time-val"}, new KvpValue (now));
     frame->set ({"string-val"}, new KvpValue (g_strdup ("abcdefghijklmnop")));
     auto guid = qof_instance_get_guid (QOF_INSTANCE (acct1));
     frame->set ({"guid-val"}, new KvpValue (const_cast<GncGUID*> (guid_copy (
@@ -157,7 +172,9 @@ setup_memory (Fixture* fixture, gconstpointer pData)
 
     fixture->session = session;
     if (g_strcmp0 (url, "sqlite3") == 0)
-        fixture->filename = g_strdup_printf ("/tmp/test-sqlite-%d", getpid ());
+        fixture->filename =
+            normalize_path (g_strdup_printf (TEMPDIR "/test-sqlite-%d",
+                                                    getpid ()));
     else
         fixture->filename = NULL;
 }
@@ -236,7 +253,9 @@ setup_business (Fixture* fixture, gconstpointer pData)
 
     fixture->session = session;
     if (g_strcmp0 (url, "sqlite3") == 0)
-        fixture->filename = g_strdup_printf ("/tmp/test-sqlite-%d", getpid ());
+        fixture->filename =
+            normalize_path (g_strdup_printf (TEMPDIR "/test-sqlite-%d",
+                                                    getpid ()));
     else
         fixture->filename = NULL;
 }
@@ -668,6 +687,8 @@ test_suite_gnc_backend_dbi (void)
     }
     mysql_url.append(getenv("TEST_MYSQL_URL") ? getenv("TEST_MYSQL_URL") : "");
     pgsql_url.append(getenv("TEST_PGSQL_URL") ? getenv("TEST_PGSQL_URL") : "");
+
+    sort(drivers.begin(), drivers.end());
 
     for (auto name : drivers)
     {

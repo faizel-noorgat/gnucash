@@ -28,7 +28,8 @@
 #include <errno.h>
 #include <glib.h>
 #include <glib/gstdio.h>
-#include <string.h>
+#include <string>
+#include <fstream>
 
 #include "Account.h"
 #include "Transaction.h"
@@ -85,9 +86,9 @@ static QofLogModule log_module = "gnc.translog";
 
 
 static int gen_logs = 1;
-static FILE * trans_log = nullptr; /**< current log file handle */
-static char * trans_log_name = nullptr; /**< current log file name */
-static char * log_base_name = nullptr;
+static std::ofstream trans_log_stream; /**< current log file handle */
+static std::string trans_log_name; /**< current log file name */
+static std::string log_base_name;
 
 /********************************************************************\
 \********************************************************************/
@@ -107,7 +108,7 @@ void xaccLogEnable  (void)
 void
 xaccReopenLog (void)
 {
-    if (trans_log)
+    if (trans_log_stream.is_open())
     {
         xaccCloseLog();
         xaccOpenLog();
@@ -120,10 +121,9 @@ xaccLogSetBaseName (const char *basepath)
 {
     if (!basepath) return;
 
-    g_free (log_base_name);
-    log_base_name = g_strdup (basepath);
+    log_base_name = basepath;
 
-    if (trans_log)
+    if (trans_log_stream.is_open())
     {
         xaccCloseLog();
         xaccOpenLog();
@@ -141,13 +141,12 @@ gboolean
 xaccFileIsCurrentLog (const gchar *name)
 {
     gchar *base;
-    gint result;
 
-    if (!name || !trans_log_name)
+    if (!name || trans_log_name.empty())
         return FALSE;
 
     base = g_path_get_basename(name);
-    result = (strcmp(base, trans_log_name) == 0);
+    bool result = trans_log_name.compare(base) == 0;
     g_free(base);
     return result;
 }
@@ -166,17 +165,18 @@ xaccOpenLog (void)
 	 PINFO ("Attempt to open disabled transaction log");
 	 return;
     }
-    if (trans_log) return;
+    if (trans_log_stream.is_open()) return;
 
-    if (!log_base_name) log_base_name = g_strdup ("translog");
+    if (log_base_name.empty())
+        log_base_name = "translog";
 
     /* tag each filename with a timestamp */
     timestamp = gnc_date_timestamp ();
 
-    filename = g_strconcat (log_base_name, ".", timestamp, ".log", nullptr);
+    filename = g_strconcat (log_base_name.c_str(), ".", timestamp, ".log", nullptr);
 
-    trans_log = g_fopen (filename, "a");
-    if (!trans_log)
+    trans_log_stream.open(filename, std::ios::app);
+    if (!trans_log_stream.is_open())
     {
         int norr = errno;
         printf ("Error: xaccOpenLog(): cannot open journal\n"
@@ -188,20 +188,20 @@ xaccOpenLog (void)
     }
 
     /* Save the log file name */
-    if (trans_log_name)
-        g_free (trans_log_name);
-    trans_log_name = g_path_get_basename(filename);
+    auto tmpstr = g_path_get_basename(filename);
+    trans_log_name = tmpstr;
+    g_free (tmpstr);
 
     g_free (filename);
     g_free (timestamp);
 
     /*  Note: this must match src/import-export/log-replay/gnc-log-replay.c */
-    fprintf (trans_log, "mod\ttrans_guid\tsplit_guid\ttime_now\t"
-             "date_entered\tdate_posted\t"
-             "acc_guid\tacc_name\tnum\tdescription\t"
-             "notes\tmemo\taction\treconciled\t"
-             "amount\tvalue\tdate_reconciled\n");
-    fprintf (trans_log, "-----------------\n");
+    trans_log_stream << "mod\ttrans_guid\tsplit_guid\ttime_now\t"
+                     << "date_entered\tdate_posted\t"
+                     << "acc_guid\tacc_name\tnum\tdescription\t"
+                     << "notes\tmemo\taction\treconciled\t"
+                     << "amount\tvalue\tdate_reconciled\n"
+                     << "-----------------\n";
 }
 
 /********************************************************************\
@@ -210,10 +210,9 @@ xaccOpenLog (void)
 void
 xaccCloseLog (void)
 {
-    if (!trans_log) return;
-    fflush (trans_log);
-    fclose (trans_log);
-    trans_log = nullptr;
+    if (!trans_log_stream.is_open()) return;
+    trans_log_stream.flush();
+    trans_log_stream.close();
 }
 
 /********************************************************************\
@@ -233,14 +232,14 @@ xaccTransWriteLog (Transaction *trans, char flag)
          PINFO ("Attempt to write disabled transaction log");
 	 return;
     }
-    if (!trans_log) return;
+    if (!trans_log_stream.is_open()) return;
 
     gnc_time64_to_iso8601_buff (gnc_time(nullptr), dnow);
     gnc_time64_to_iso8601_buff (trans->date_entered, dent);
     gnc_time64_to_iso8601_buff (trans->date_posted, dpost);
     guid_to_string_buff (xaccTransGetGUID(trans), trans_guid_str);
     trans_notes = xaccTransGetNotes(trans);
-    fprintf (trans_log, "===== START\n");
+    trans_log_stream << "===== START\n";
 
     for (node = trans->splits; node; node = node->next)
     {
@@ -266,37 +265,26 @@ xaccTransWriteLog (Transaction *trans, char flag)
         amt = xaccSplitGetAmount (split);
         val = xaccSplitGetValue (split);
 
-        /* use tab-separated fields */
-        fprintf (trans_log,
-                 "%c\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t"
-                 "%s\t%s\t%s\t%s\t%c\t%" G_GINT64_FORMAT "/%" G_GINT64_FORMAT "\t%" G_GINT64_FORMAT "/%" G_GINT64_FORMAT "\t%s\n",
-                 flag,
-                 trans_guid_str, split_guid_str,  /* trans+split make up unique id */
-                 /* Note that the next three strings always exist,
-                 		* so we don't need to test them. */
-                 dnow,
-                 dent,
-                 dpost,
-                 acc_guid_str,
-                 accname ? accname : "",
-                 trans->num ? trans->num : "",
-                 trans->description ? trans->description : "",
-                 trans_notes ? trans_notes : "",
-                 split->memo ? split->memo : "",
-                 split->action ? split->action : "",
-                 split->reconciled,
-                 gnc_numeric_num(amt),
-                 gnc_numeric_denom(amt),
-                 gnc_numeric_num(val),
-                 gnc_numeric_denom(val),
-                 /* The next string always exists. No need to test it. */
-                 drecn);
+        trans_log_stream << flag << '\t'
+                         << trans_guid_str << '\t'
+                         << split_guid_str << '\t'
+                         << dnow << '\t'
+                         << dent << '\t'
+                         << dpost << '\t'
+                         << acc_guid_str << '\t'
+                         << (accname ? accname : "") << '\t'
+                         << (trans->num ? trans->num : "") << '\t'
+                         << (trans->description ? trans->description : "") << '\t'
+                         << (trans_notes ? trans_notes : "") << '\t'
+                         << (split->memo ? split->memo : "") << '\t'
+                         << (split->action ? split->action : "") << '\t'
+                         << split->reconciled << '\t'
+                         << gnc_numeric_num(amt) << '/' << gnc_numeric_denom(amt) << '\t'
+                         << gnc_numeric_num(val) << '/' << gnc_numeric_denom(val) << '\t'
+                         << drecn << '\n';
     }
 
-    fprintf (trans_log, "===== END\n");
-
-    /* get data out to the disk */
-    fflush (trans_log);
+    trans_log_stream << "===== END" << std::endl;
 }
 
 /************************ END OF ************************************\

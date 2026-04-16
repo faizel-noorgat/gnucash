@@ -67,6 +67,7 @@
   ;; It also catches XML parsing errors, dumping the options changed.
   ;;
   ;; It also dumps the render into /tmp/test-trep-XX.html where XX is the test title
+  (qof-date-format-set QOF-DATE-FORMAT-ISO)
   (gnc:options->sxml trep-uuid options "test-trep" test-title))
 
 (define (get-row-col sxml row col)
@@ -721,7 +722,7 @@
       (set-option! options "Sorting" "Primary Key" 'date)
       (let* ((sxml (options->sxml options "sorting=date")))
         (test-equal "dates are sorted"
-          '("12/31/69" "12/31/69" "01/01/70" "02/01/70" "02/10/70")
+          '("1969-12-31" "1969-12-31" "1970-01-01" "1970-02-01" "1970-02-10")
           (get-row-col sxml #f 1)))
 
       (set-option! options "Sorting" "Primary Key" 'number)
@@ -961,10 +962,10 @@
                 "-#51.00" "-#51.00" "-#51.00" "-#51.00" "-#51.00" "-#51.00" "-#612.00" "-#51.00")
           (get-row-col sxml 5 #f))
         (test-equal "summary gbp total-row is correct"
-          (list "Grand Total" "#0.00" "#0.00")
+          (list "Total" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00" "#0.00")
           (get-row-col sxml 6 #f))
         (test-equal "summary total-row is correct"
-          (list "$0.00" "$0.00")
+          (list "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00" "$0.00")
           (get-row-col sxml 7 #f)))
 
       (set-option! options "General" "Start Date" (cons 'absolute (gnc-dmy2time64 01 01 1969)))
@@ -980,19 +981,19 @@
           (list "Income" "-$29.00" "-$29.00" "-$9.67")
           (get-row-col sxml 3 #f))
         (test-equal "sparse summary-table - row 4"
-          (list "Grand Total" "$3.00" "$1.00")
+          (list "Total" "$0.00" "$11.00" "-$8.00" "$3.00" "$1.00")
           (get-row-col sxml 4 #f))
         (test-equal "sparse summary-table - col 1"
-          (list "Bank" "Expenses" "Income" "Grand Total")
+          (list "Bank" "Expenses" "Income" "Total")
           (get-row-col sxml #f 1))
         (test-equal "sparse summary-table - col 2"
-          (list "$29.00" "-$29.00")
+          (list "$29.00" "-$29.00" "$0.00")
           (get-row-col sxml #f 2))
         (test-equal "sparse summary-table - col 3"
-          (list "-$5.00" "$16.00")
+          (list "-$5.00" "$16.00" "$11.00")
           (get-row-col sxml #f 3))
         (test-equal "sparse summary-table - col 4"
-          (list "-$23.00" "$15.00")
+          (list "-$23.00" "$15.00" "-$8.00")
           (get-row-col sxml #f 4))
         (test-equal "sparse summary-table - col 5"
           (list "$1.00" "$31.00" "-$29.00" "$3.00")
@@ -1001,6 +1002,24 @@
           (list "$0.33" "$10.33" "-$9.67" "$1.00")
           (get-row-col sxml #f 6))))
     (test-end "subtotal table")
+
+    (test-begin "invoice-column")
+    (let* ((invoices (create-test-invoice-data))
+           (options (default-testing-options)))
+      (set-option! options "General" "Start Date" (cons 'absolute (gnc-dmy2time64 1 9 1980)))
+      (set-option! options "General" "End Date" (cons 'absolute (gnc-dmy2time64 7 9 1980)))
+      (set-option! options "Display" "Invoice" #t)
+      (set-option! options "Accounts" "Accounts"
+                   (list
+                    (gnc-account-lookup-by-full-name bank "Root.Asset.Bank")
+                    (gnc-account-lookup-by-full-name bank "Root.A/Receivable")
+                    (gnc-account-lookup-by-full-name bank "Root.A/Payable")
+                    (gnc-account-lookup-by-full-name bank "Root.Income")))
+      (let ((sxml (options->sxml options "show invoice")))
+        (test-equal "retrieve invoice IDs from trep"
+                    '("0003" "0004" "0006" "0007" "0001" "0002" "0005")
+                    (get-row-col sxml #f 5))))
+    (test-end "invoice-column")
 
     (test-begin "csv-export")
     (let ((options (default-testing-options)))
@@ -1020,8 +1039,8 @@
       (set-option! options "Sorting" "Secondary Subtotal for Date Key" 'monthly)
 
       (let* ((template (gnc:find-report-template trep-uuid))
-             (constructor (record-constructor <report>))
-             (report (constructor trep-uuid "bar" options #t #t #f #f ""))
+             (report-id (gnc:make-report trep-uuid options))
+             (report (gnc-report-find report-id))
              (renderer (gnc:report-template-renderer template))
              (document (renderer report #:export-type 'csv)))
         (test-assert "csv output has no export error"
@@ -1048,7 +1067,7 @@
      '(("from" "01/01/2010")
        ("to" "31/12/2010")
        ("total" 23500 30000 25/7 sym))))
-  (test-error "gnc:lists->csv improper list"
+  (test-error "gnc:lists->csv improper list" #t
     (gnc:lists->csv
      '(("from" "01/01/2010")
        ("to" "31/12/2010")

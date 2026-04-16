@@ -5266,22 +5266,179 @@ url_signal_cb (GtkAboutDialog *dialog, gchar *uri, gpointer data)
     return TRUE;
 }
 
-static gboolean
-link_button_cb (GtkLinkButton *button, gpointer user_data)
+#define DEFAULT_MARGIN 5
+
+static void
+set_text_cursor (GdkWindow *win, GdkCursorType type)
 {
-   const gchar *uri = gtk_link_button_get_uri (button);
-   gchar *escaped_uri = g_uri_escape_string (uri, ":/.\\", true);
-   gnc_launch_doclink (GTK_WINDOW(user_data), escaped_uri);
-   g_free (escaped_uri);
-   return TRUE;
+    if (!win && !type)
+        return;
+
+    GdkCursor *current = gdk_window_get_cursor (win);
+    if (type == gdk_cursor_get_cursor_type (current))
+        return;
+
+    GdkCursor *cur = gdk_cursor_new_for_display (gdk_window_get_display (win), type);
+    gdk_window_set_cursor (win, cur);
+}
+
+static gboolean
+textview_motion_notify_cb (GtkWidget *textview,
+                           GdkEventMotion *event,
+                           gpointer user_data)
+{
+    if ((event->state & GDK_BUTTON1_MASK) ||
+         gtk_text_buffer_get_has_selection (gtk_text_view_get_buffer
+                                           (GTK_TEXT_VIEW(textview))))
+        return false;
+
+    GtkTextIter iter;
+    gboolean valid = gtk_text_view_get_iter_at_location (GTK_TEXT_VIEW(textview),
+                                                         &iter, event->x, event->y);
+
+    if (valid && (event->y > DEFAULT_MARGIN))
+    {
+        GSList *tt_list = gtk_text_iter_get_tags (&iter);
+
+        if (tt_list)
+        {
+            GtkTextTag *tt = (GtkTextTag*)g_slist_nth_data (tt_list, 0);
+
+            if (g_object_get_data (G_OBJECT(tt), "link"))
+                set_text_cursor (event->window, GDK_HAND1);
+            else
+                set_text_cursor (event->window, GDK_XTERM);
+
+            g_slist_free (tt_list);
+        }
+        else
+            set_text_cursor (event->window, GDK_XTERM);
+    }
+    else
+        set_text_cursor (event->window, GDK_XTERM);
+
+    return true;
+}
+
+static gboolean
+textview_url_activate (GtkTextTag *tag,
+                       GObject *object,
+                       GdkEvent *event,
+                       GtkTextIter *iter,
+                       gpointer user_data)
+{
+    GdkEventButton *event_button = (GdkEventButton*)event;
+
+    if ((event->type == GDK_BUTTON_RELEASE) &&
+        (event_button->button == 1) &&
+        !gtk_text_buffer_get_has_selection (gtk_text_view_get_buffer
+                                            (GTK_TEXT_VIEW (object))) &&
+        (event_button->y > DEFAULT_MARGIN))
+    {
+        gchar *link = (gchar*)g_object_get_data (G_OBJECT(tag), "link");
+        PINFO("Link is '%s'", link);
+        gchar *escaped_uri = g_uri_escape_string (link, ":/.\\", true);
+        PINFO("Escaped Link is '%s'", escaped_uri);
+        gnc_launch_doclink (GTK_WINDOW(user_data), escaped_uri);
+        g_free (escaped_uri);
+
+        return true;
+    }
+    return false;
+}
+
+static gint
+get_max_text_width (GtkTextView *textview, std::vector<EnvPaths> ep_vec)
+{
+    gint max_text_width = 0;
+    for (const auto& ep : ep_vec)
+    {
+        gint text_width;
+        gchar *env_name = g_strconcat (ep.env_name, ":", nullptr);
+
+        PangoLayout *layout = gtk_widget_create_pango_layout (GTK_WIDGET(textview),
+                                                              env_name);
+
+        pango_layout_get_pixel_size (layout, &text_width, nullptr);
+        g_object_unref (layout);
+        g_free (env_name);
+
+        max_text_width = MAX(max_text_width, text_width);
+    }
+    return max_text_width;
+}
+
+static GtkTextTag *
+create_left_margin_text_tag (GtkTextView *textview,
+                             gchar *lmargin_tag,
+                             const gchar *text,
+                             gint max_width)
+{
+    if (!lmargin_tag)
+        return nullptr;
+
+    GtkTextTag *lmargin_tt = gtk_text_tag_new (lmargin_tag);
+    int text_width;
+
+    PangoLayout *layout = gtk_widget_create_pango_layout (GTK_WIDGET(textview), text);
+    pango_layout_get_pixel_size (layout, &text_width, nullptr);
+    g_object_unref (layout);
+
+    g_object_set (G_OBJECT(lmargin_tt), "left_margin",
+                  DEFAULT_MARGIN + max_width - text_width, nullptr);
+
+    return lmargin_tt;
+}
+
+static GdkRGBA
+get_link_color (void)
+{
+    GdkRGBA link_color;
+    GtkWidget *dummy_link_button = gtk_link_button_new_with_label ("https://www.gnucash.org", "Dummy");
+    GtkStyleContext *context = gtk_widget_get_style_context (GTK_WIDGET(dummy_link_button));
+    gtk_style_context_get_color (context, GTK_STATE_FLAG_LINK, &link_color);
+
+    return link_color;
+}
+
+static GtkTextTag *
+create_url_text_tag (GtkDialog *dialog,
+                     GdkRGBA link_color,
+                     gchar *url_tag,
+                     const gchar *uri)
+{
+    if (!url_tag)
+        return nullptr;
+
+    GtkTextTag *url_tt = gtk_text_tag_new (url_tag);
+    g_object_set (G_OBJECT(url_tt), "underline", PANGO_UNDERLINE_SINGLE,
+                                    "underline-set", true, nullptr);
+    g_object_set (G_OBJECT(url_tt), "foreground-rgba", &link_color, nullptr);
+
+    g_object_set_data_full (G_OBJECT(url_tt), "link", g_strdup (uri), g_free);
+
+    g_signal_connect (G_OBJECT(url_tt), "event",
+                      G_CALLBACK(textview_url_activate), dialog);
+    return url_tt;
+}
+
+static void
+add_textview_css_class (GtkTextView *textview)
+{
+    GdkRGBA color;
+    GtkStyleContext *stylectxt = gtk_widget_get_style_context (GTK_WIDGET(textview));
+    gtk_style_context_get_color (stylectxt, GTK_STATE_FLAG_NORMAL, &color);
+
+    if (gnc_is_dark_theme (&color))
+        gtk_style_context_add_class (stylectxt, "gnc-class-textview-dark");
+    else
+        gtk_style_context_add_class (stylectxt, "gnc-class-textview");
 }
 
 static void
 add_about_paths (GtkDialog *dialog)
 {
     GtkWidget *page_vbox = gnc_get_dialog_widget_from_id (dialog, "page_vbox");
-    GtkWidget *grid;
-    gint i = 0;
 
     if (!page_vbox)
     {
@@ -5289,39 +5446,76 @@ add_about_paths (GtkDialog *dialog)
         return;
     }
 
-    grid = gtk_grid_new ();
+    GtkWidget *textview = gtk_text_view_new ();
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW(textview));
+    GtkTextTagTable *ttt = gtk_text_buffer_get_tag_table (buffer);
+    GtkTextIter iter;
 
-    for (const auto& ep : gnc_list_all_paths ())
+    std::vector<EnvPaths> ep_vec = gnc_list_all_paths ();
+    int ep_size = (int)ep_vec.size();
+    int row = 1;
+
+    GdkRGBA link_color = get_link_color ();
+    gint max_text_width = get_max_text_width (GTK_TEXT_VIEW(textview), ep_vec);
+
+    add_textview_css_class (GTK_TEXT_VIEW(textview));
+
+    gtk_text_view_set_left_margin (GTK_TEXT_VIEW(textview), DEFAULT_MARGIN);
+    gtk_text_view_set_right_margin (GTK_TEXT_VIEW(textview), DEFAULT_MARGIN);
+    gtk_text_view_set_top_margin (GTK_TEXT_VIEW(textview), DEFAULT_MARGIN);
+    gtk_text_view_set_bottom_margin (GTK_TEXT_VIEW(textview), DEFAULT_MARGIN);
+    gtk_text_view_set_wrap_mode (GTK_TEXT_VIEW(textview), GTK_WRAP_NONE);
+
+    gtk_text_buffer_create_tag (buffer, "italic", "style", PANGO_STYLE_ITALIC, nullptr);
+
+    gtk_text_buffer_get_iter_at_offset (buffer, &iter, 0);
+
+    for (const auto& ep : ep_vec)
     {
-        gchar *env_name = g_strconcat (ep.env_name, ":", NULL);
-        GtkWidget *label = gtk_label_new (env_name);
-        const gchar *uri = gnc_uri_create_uri ("file", NULL, 0, NULL, NULL, ep.env_path);
+        gchar *env_name = g_strconcat (ep.env_name, ":", nullptr);
+        const gchar *uri = gnc_uri_create_uri ("file", nullptr, 0, nullptr, nullptr, ep.env_path);
         gchar *display_uri = gnc_doclink_get_unescaped_just_uri (uri);
-        GtkWidget *widget = gtk_link_button_new_with_label (uri, display_uri);
 
-        gtk_grid_attach (GTK_GRID(grid), label, 0, i, 1, 1);
-        gtk_widget_set_halign (label, GTK_ALIGN_END);
-        gtk_grid_attach (GTK_GRID(grid), widget, 1, i, 1, 1);
-        gtk_widget_set_halign (widget, GTK_ALIGN_START);
-        gtk_widget_set_margin_top (widget, 0);
-        gtk_widget_set_margin_bottom (widget, 0);
+        gchar *url_tag = g_strdup_printf ("%s%d", "url_tag", row);
+        gchar *lmargin_tag = g_strdup_printf ("%s%d", "lmargin_tag", row);
+
+        gtk_text_tag_table_add (ttt, create_left_margin_text_tag (GTK_TEXT_VIEW(textview),
+                                                                  lmargin_tag,
+                                                                  env_name,
+                                                                  max_text_width));
+        gtk_text_tag_table_add (ttt, create_url_text_tag (dialog,
+                                                          link_color,
+                                                          url_tag,
+                                                          uri));
+
+        gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, env_name, -1, lmargin_tag, nullptr);
+        gtk_text_buffer_insert (buffer, &iter, " ", -1);
+        gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, display_uri, -1, url_tag, nullptr);
+
+        g_free (url_tag);
+        g_free (lmargin_tag);
+        g_free (display_uri);
+        g_free (env_name);
 
         if (ep.modifiable)
         {
-            GtkWidget *mod_lab = gtk_label_new (_("(user modifiable)"));
-            gtk_grid_attach (GTK_GRID(grid), mod_lab, 2, i, 1, 1);
-            gtk_widget_show (mod_lab);
+            gtk_text_buffer_insert (buffer, &iter, " ", -1);
+            gtk_text_buffer_insert_with_tags_by_name (buffer, &iter, _("(User modifiable)"), -1, "italic", nullptr);
         }
-        g_signal_connect (widget, "activate-link",
-                          G_CALLBACK(link_button_cb), dialog);
-        i++;
 
-        g_free (display_uri);
-        g_free (env_name);
+        if (row != ep_size)
+            gtk_text_buffer_insert (buffer, &iter, "\n", -1);
+
+        row++;
     }
-    gtk_container_add_with_properties (GTK_CONTAINER(page_vbox), grid,
-                                       "position", 1, NULL);
-    gtk_widget_show_all (grid);
+    gtk_text_view_set_editable (GTK_TEXT_VIEW(textview), false);
+
+    g_signal_connect (G_OBJECT(textview), "motion-notify-event",
+                      G_CALLBACK(textview_motion_notify_cb), nullptr);
+
+    gtk_container_add_with_properties (GTK_CONTAINER(page_vbox), textview,
+                                       "position", 1, nullptr);
+    gtk_widget_show_all (page_vbox);
 }
 
 /** Create and display the "about" dialog for gnucash.
@@ -5351,19 +5545,19 @@ gnc_main_window_cmd_help_about (GSimpleAction *simple,
                                       ? gnc_quote_source_fq_version ()
                                       : "-");
     GtkDialog *dialog = GTK_DIALOG (gtk_about_dialog_new ());
-    g_object_set (G_OBJECT (dialog),
-                  "authors", authors,
-                  "documenters", documenters,
-                  "comments", _("Accounting for personal and small business finance."),
-                  "copyright", copyright,
-                  "license", license,
-                  "logo", logo,
-                  "name", "GnuCash",
-                  /* Translators: the following string will be shown in Help->About->Credits
-                     Enter your name or that of your team and an email contact for feedback.
-                     The string can have multiple rows, so you can also add a list of
-                     contributors. */
-                  "translator-credits", _("translator-credits"),
+    g_object_set(G_OBJECT(dialog), "authors", authors, "documenters",
+                 documenters, "comments",
+                 _("Accounting for personal and small business finance."),
+                 "copyright", copyright, "license", license, "logo", logo,
+                 "name", "GnuCash",
+                 /* Translators: the following string will be shown in
+                  * Help->About->Credits It's intended to be generated
+                  * automatically before each release so there's
+                  * usually no need to modify it, but if you do be
+                  * sure to include a newline (\\n) after each credit
+                  * so that it displays one per line.
+                  */
+                  "translator-credits", _("translator-credits\n"),
                   "version", version,
                   "website", PACKAGE_URL,
                   "website-label", _("Visit the GnuCash website."),

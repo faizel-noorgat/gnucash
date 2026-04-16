@@ -105,29 +105,22 @@ node_and_commodity_equal (xmlNodePtr node, const gnc_commodity* com)
         }
         else if (g_strcmp0 ((char*)mark->name, "cmdty:fraction") == 0)
         {
-            gchar* txt;
             gint64 type;
 
-            txt = dom_tree_to_text (mark);
+            auto txt = dom_tree_to_text (mark);
 
             if (!txt)
             {
                 return "couldn't get fraction string";
             }
 
-            else if (!string_to_gint64 (txt, &type))
+            else if (!string_to_gint64 (*txt, &type))
             {
-                g_free (txt);
                 return "couldn't convert fraction string to int";
             }
             else if (type != gnc_commodity_get_fraction (com))
             {
-                g_free (txt);
                 return "fractions differ";
-            }
-            else
-            {
-                g_free (txt);
             }
         }
         else if (g_strcmp0 ((char*)mark->name, "cmdty:slots") == 0)

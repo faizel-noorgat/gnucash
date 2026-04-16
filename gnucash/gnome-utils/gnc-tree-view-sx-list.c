@@ -131,6 +131,13 @@ gnc_tree_view_sx_list_new (GncSxInstanceModel *sx_instances)
                                          SXLTMA_COL_FREQUENCY, -1, NULL);
     g_object_set_data (G_OBJECT(col), DEFAULT_VISIBLE, GINT_TO_POINTER(1));
 
+    col = gnc_tree_view_add_numeric_column (GNC_TREE_VIEW(view), _("Postponed"),
+                                           "postponed", "    Postponed",
+                                           SXLTMA_COL_NUM_POSTPONED,
+                                           GNC_TREE_VIEW_COLUMN_COLOR_NONE,
+                                           GNC_TREE_VIEW_COLUMN_VISIBLE_ALWAYS, NULL);
+    g_object_set_data (G_OBJECT(col), DEFAULT_VISIBLE, GINT_TO_POINTER(0));
+
     col = gnc_tree_view_add_text_column (GNC_TREE_VIEW(view), _("Last Occur"), "last-occur", NULL,
                                          "2007-01-02",
                                          SXLTMA_COL_LAST_OCCUR, -1, NULL);

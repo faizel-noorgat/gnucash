@@ -57,7 +57,7 @@
 #include "gnc-guile-utils.h"
 #include "gnc-html-history.h"
 #include "gnc-html.h"
-#include "gnc-html-factory.h"
+#include "gnc-html-factory.hpp"
 #include "gnc-file.h"
 #include "gnc-filepath-utils.h"
 #include "gnc-gtk-utils.h"
@@ -240,7 +240,7 @@ static GncToolBarShortNames toolbar_labels[] =
     /* Translators: This string is meant to be a short alternative for "Save Report Configuration As…"
        to be used as toolbar button label. */
     { "ReportSaveAsAction",   N_("Save Config As…") },
-    { "FilePrintPDFAction",   N_("Make Pdf") },
+    { "FilePrintPDFAction",   N_("Export as PDF") },
     { nullptr, nullptr },
 };
 
@@ -674,7 +674,12 @@ gnc_plugin_page_report_load_cb (GncHtml * html, URLType type,
             && (strlen(location) > 3)
             && !strncmp("id=", location, 3))
     {
-        report_id = atoi(location + 3);
+        report_id = gnc_report_id_string_to_report_id (location + 3);
+        if (report_id < 0)
+        {
+            LEAVE ("id_string error %s", location);
+            return;
+        }
         DEBUG( "parsed id=%d", report_id );
     }
     else if (!g_strcmp0( type, URL_TYPE_OPTIONS)
@@ -1183,9 +1188,10 @@ gnc_plugin_page_report_destroy(GncPluginPageReportPrivate * priv)
     }
 
     gnc_html_destroy(priv->html);
-
-    priv->container     = nullptr;
     priv->html          = nullptr;
+
+    g_object_unref(priv->container);
+    priv->container     = nullptr;
 
     if (priv->cur_report != SCM_BOOL_F)
         scm_gc_unprotect_object(priv->cur_report);
@@ -1599,12 +1605,16 @@ gnc_get_export_filename (SCM choice, GtkWindow *parent)
     filepath = gnc_file_dialog (parent, title, nullptr, default_dir,
                                 GNC_FILE_DIALOG_EXPORT);
 
-    if (filepath != nullptr) // test for cancel pressed
+    /* Try to test for extension on file name, add if missing */
+    if (filepath && strchr (filepath, '.') == nullptr)
     {
-        /* Try to test for extension on file name, add if missing */
-        if (g_strrstr(filepath, ".") == nullptr)
-            filepath = g_strconcat(filepath, ".", g_ascii_strdown(type, strlen(type)), nullptr);
+        char* extension = g_ascii_strdown (type, -1);
+        char* newpath = g_strdup_printf ("%s.%s", filepath, extension);
+        g_free (extension);
+        g_free (filepath);
+        filepath = newpath;
     }
+
     g_free (type);
     g_free (title);
     g_free (default_dir);
@@ -1717,6 +1727,13 @@ gnc_plugin_page_report_save_cb (GSimpleAction *simple,
     check_func = scm_c_eval_string("gnc:is-custom-report-type");
     if (scm_is_true (scm_call_1 (check_func, priv->cur_report)))
     {
+        auto report_name_str{priv->cur_odb->lookup_string_option("General", "Report name")};
+        auto window{GTK_WINDOW(gnc_plugin_page_get_window (GNC_PLUGIN_PAGE(report)))};
+
+        if (!gnc_action_dialog (window, _("_Overwrite"), false, _("This will update and \
+overwrite the existing saved report named \"%s\"."), report_name_str.c_str()))
+            return;
+
         /* The current report is already based on a custom report.
          * Replace the existing one instead of adding a new one
          */

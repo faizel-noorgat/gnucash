@@ -533,6 +533,20 @@ gnc_reconcile_view_toggle (GNCReconcileView *view, Split *split)
                    reconcile_view_signals[TOGGLE_RECONCILED], 0, split);
 }
 
+void
+gnc_reconcile_view_unclear_all (GNCReconcileView *view)
+{
+    g_return_if_fail (GNC_IS_RECONCILE_VIEW(view));
+    g_hash_table_remove_all (view->reconciled);
+}
+
+void
+gnc_reconcile_view_set_cleared (GNCReconcileView *view, Split *split)
+{
+    g_return_if_fail (GNC_IS_RECONCILE_VIEW(view));
+    g_hash_table_add (view->reconciled, split);
+}
+
 static gboolean
 follow_select_tree_path (GNCReconcileView *view)
 {
@@ -784,7 +798,7 @@ gnc_reconcile_view_finalize (GObject *object)
 {
     GNCReconcileView *view = GNC_RECONCILE_VIEW(object);
 
-    g_list_free (view->column_list);
+    g_list_free_full (view->column_list, g_object_unref);
     if (view->reconciled != NULL)
     {
         g_hash_table_destroy (view->reconciled);

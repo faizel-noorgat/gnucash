@@ -2935,10 +2935,9 @@ price_parse_xml_sub_node (GNCPrice* p, xmlNodePtr sub_node, QofBook* book)
 
     if (g_strcmp0 ("price:id", (char*)sub_node->name) == 0)
     {
-        GncGUID* c = dom_tree_to_guid (sub_node);
+        auto c = dom_tree_to_guid (sub_node);
         if (!c) return FALSE;
-        gnc_price_set_guid (p, c);
-        guid_free (c);
+        gnc_price_set_guid (p, &*c);
     }
     else if (g_strcmp0 ("price:commodity", (char*)sub_node->name) == 0)
     {
@@ -2960,17 +2959,13 @@ price_parse_xml_sub_node (GNCPrice* p, xmlNodePtr sub_node, QofBook* book)
     }
     else if (g_strcmp0 ("price:source", (char*)sub_node->name) == 0)
     {
-        char* text = dom_tree_to_text (sub_node);
-        if (!text) return FALSE;
-        gnc_price_set_source_string (p, text);
-        g_free (text);
+        if (!apply_xmlnode_text (gnc_price_set_source_string, p, sub_node))
+            return false;
     }
     else if (g_strcmp0 ("price:type", (char*)sub_node->name) == 0)
     {
-        char* text = dom_tree_to_text (sub_node);
-        if (!text) return FALSE;
-        gnc_price_set_typestr (p, text);
-        g_free (text);
+        if (!apply_xmlnode_text (gnc_price_set_typestr, p, sub_node))
+            return false;
     }
     else if (g_strcmp0 ("price:value", (char*)sub_node->name) == 0)
     {

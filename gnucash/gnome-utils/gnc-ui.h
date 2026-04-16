@@ -100,6 +100,12 @@ gnc_ok_cancel_dialog (GtkWindow *parent,
                       gint default_result,
                       const char *format, ...) G_GNUC_PRINTF (3, 4);
 
+extern gboolean
+gnc_action_dialog (GtkWindow *parent,
+                   const gchar *action,
+                   gboolean action_default,
+                   const gchar *format, ...) G_GNUC_PRINTF (4, 5);
+
 extern void
 gnc_warning_dialog (GtkWindow *parent,
                     const char *format, ...) G_GNUC_PRINTF (2, 3);

@@ -14,9 +14,14 @@ endif()
 if (POLICY CMP0167)
   cmake_policy(SET CMP0167 OLD)
 endif()
+# CMake 3.31+ Use normalization rules on install DESTINATION
+# command. We shouldn't be impacted so allow the new behavior.
+if (POLICY CMP0177)
+  cmake_policy(SET CMP0177 NEW)
+endif()
 
 project (gnucash
-    VERSION 5.10
+    VERSION 5.15
 )
 
 enable_testing()
@@ -50,6 +55,7 @@ include (GncGenerateGResources)
 include (MakeDistFiles)
 include (GNUInstallDirs)
 include (TestBigEndian)
+include (CheckStructHasMember)
 
 # ############################################################
 # These options are settable from the CMake command line. For example, to disable
@@ -168,7 +174,7 @@ endif()
 # Distribution tarballs have this file in the source tree
 # Git checkouts or zipfiles downloaded straight from github won't have it
 # and require us to build it.
-if (BUILDING_FROM_VCS OR NOT EXISTS "${CMAKE_SOURCE_DIR}/libgnucash/core-utilsgnc-vcs-info.h")
+if (BUILDING_FROM_VCS OR NOT EXISTS "${CMAKE_SOURCE_DIR}/libgnucash/core-utils/gnc-vcs-info.h")
   set(VCS_INFO_BASE_DIR ${CMAKE_BINARY_DIR})
   set(GENERATE_VCS_INFO "Yes")
 else()
@@ -203,8 +209,18 @@ if (WIN32)
   set(REGEX_LDFLAGS "-L${REGEX_LIB_PATH} -lregex")
   #set(LIBXSLT_INCLUDE_DIR ${CMAKE_PREFIX_PATH}/libxslt/include)
   #set(LIBXSLT_XSLTPROC_EXECUTABLE ${CMAKE_PREFIX_PATH}/libxslt/bin/xsltproc)
-#Prevent creating a console window on startup and harden the executable.
+  #Prevent creating a console window on startup and harden the executable.
   set(CMAKE_EXE_LINKER_FLAGS "-mwindows -Wl,--nxcompat -Wl,--dynamicbase")
+  #Find the winsock2 library
+  find_library(WINSOCK_LIB wsock32)
+  find_library(WS2_LIB ws2_32)
+endif()
+
+if (APPLE)
+  # Prefer libraries in the PREFIX over Apple-provided frameworks:
+  if (NOT DEFINED CMAKE_FIND_FRAMEWORK)
+    set(CMAKE_FIND_FRAMEWORK LAST)
+  endif()
 endif()
 
 find_package(Threads REQUIRED)
@@ -215,7 +231,7 @@ if (NOT PKG_CONFIG_FOUND)
  endif()
 
 # glib et al.
-set(GLIB_MIN_VERSION 2.56.1)
+set(GLIB_MIN_VERSION 2.68.1)
 set(GTK_MIN_VERSION 3.22.30)
 
 pkg_check_modules (GLIB2 REQUIRED IMPORTED_TARGET glib-2.0>=${GLIB_MIN_VERSION})
@@ -520,6 +536,14 @@ if (WITH_PYTHON)
   if (NOT DEFINED Python3_FIND_UNVERSIONED_NAMES)
     set (Python3_FIND_UNVERSIONED_NAMES FIRST)
   endif()
+  if (NOT DEFINED Python3_FIND_VIRTUALENV)
+    # Don't prefer virtualenv python3: Prefer the one that's first on $PATH
+    set(Python3_FIND_VIRTUALENV STANDARD)
+  endif()
+  if (APPLE)
+    # The macOS SDK-provided Python framework lacks SQLite3 support
+    set(Python3_FIND_FRAMEWORK NEVER)
+  endif()
   find_package (Python3 ${PYTHON_MIN_VERSION} COMPONENTS Interpreter Development)
   if (NOT Python3_FOUND)
     message(SEND_ERROR "Python support enabled, but Python3 interpreter and/or libaries not found.")
@@ -561,7 +585,7 @@ get_filename_component(PERL_DIR ${PERL_EXECUTABLE} DIRECTORY)
 find_program(POD2MAN_EXECUTABLE pod2man HINTS ${PERL_DIR})
 
 #ICU
-find_package(ICU REQUIRED COMPONENTS uc i18n)
+find_package(ICU 54.0 REQUIRED COMPONENTS uc i18n)
 
 pkg_check_modules (LIBSECRET libsecret-1>=0.18)
 IF (LIBSECRET_FOUND)
@@ -575,7 +599,15 @@ set (Boost_FIND_QUIETLY ON)
 if (NOT DEFINED ${BOOST_ROOT})
   set(BOOST_ROOT $ENV{BOOST_ROOT})
 endif()
-find_package (Boost 1.67.0 COMPONENTS date_time filesystem locale program_options regex system)
+find_package (Boost 1.67.0 REQUIRED)
+
+if (Boost_FOUND)
+ if (Boost_VERSION VERSION_LESS "1.89.0")
+  find_package(Boost 1.67.0  COMPONENTS date_time filesystem locale program_options regex system)
+ else()
+  find_package(Boost 1.67.0  COMPONENTS date_time filesystem locale program_options regex)
+ endif()
+endif()
 
 if (Boost_FOUND)
   include_directories(${Boost_INCLUDE_DIRS})
@@ -612,11 +644,12 @@ if (UNIX)
 endif()
 if (MINGW)
   set( CMAKE_C_FLAGS "-Werror -Wall -Wmissing-prototypes -Wmissing-declarations ${CMAKE_C_FLAGS}")
-  set( CMAKE_CXX_FLAGS "-DWINVER=0x0500 -D_EMULATE_GLIBC=0 ${CMAKE_CXX_FLAGS}") # Workaround for bug in gtest on mingw, see https://github.com/google/googletest/issues/893 and https://github.com/google/googletest/issues/920
+  set( CMAKE_CXX_FLAGS "-Werror -Wall -Wmissing-declarations -DWINVER=0x0A00 ${CMAKE_CXX_FLAGS}") # Workaround for bug in gtest on mingw, see https://github.com/google/googletest/issues/893 and https://github.com/google/googletest/issues/920
 endif()
 
 if (APPLE)
-  execute_process(COMMAND clang --print-file-name=libclang_rt.asan_osx_dynamic.dylib
+  set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-gnu-folding-constant")
+   execute_process(COMMAND clang --print-file-name=libclang_rt.asan_osx_dynamic.dylib
     OUTPUT_VARIABLE ASAN_DYNAMIC_LIB
     OUTPUT_STRIP_TRAILING_WHITESPACE)
   set(ASAN_DYNAMIC_LIB_ENV "DYLD_INSERT_LIBRARIES=${ASAN_DYNAMIC_LIB}")
@@ -693,7 +726,8 @@ endif()
 gnc_gtest_configure()
 
 # There are targets that need to build before tests will run
-add_custom_target(check
+add_custom_target(testbuild)
+add_custom_target(check DEPENDS testbuild
   COMMAND ${CMAKE_CTEST_COMMAND}
 )
 
@@ -728,6 +762,8 @@ set(gnucash_DOCS
     ChangeLog.2021
     ChangeLog.2022
     ChangeLog.2023
+    ChangeLog.2024
+    ChangeLog.2025
     DOCUMENTERS
     HACKING
     LICENSE
@@ -764,7 +800,7 @@ check_include_files (wctype.h HAVE_WCTYPE_H)
 
 test_big_endian(IS_BIGENDIAN)
 if (IS_BIGENDIAN)
-  set(WORDS_BIGENDIAN)
+  add_compile_definition (WORDS_BIGENDIAN)
 endif()
 
 if (NOT DISABLE_NLS)
@@ -786,7 +822,18 @@ set (_ALL_SOURCE 1)
 set (_GNU_SOURCE 1)
 set (_POSIX_PTHREAD_SEMANTICS 1)
 set (_TANDEM_SOURCE 1)
-set (__EXTENSIONS__ 1)
+endif()
+
+# Solaris header files limit the visibility of non-standard extensions
+# unless __EXTENSIONS__ is defined.  We need some of those
+# non-standard interfaces.
+if (CMAKE_SYSTEM_NAME MATCHES "SunOS")
+add_compile_definitions(__EXTENSIONS__=1)
+endif()
+
+check_struct_has_member("struct tm" tm_gmtoff time.h have_struct_tm_gmtoff)
+if (have_struct_tm_gmtoff)
+    set(HAVE_STRUCT_TM_GMTOFF 1)
 endif()
 
 if (UNIX)
@@ -808,7 +855,6 @@ set (HAVE_PTHREAD_PRIO_INHERIT 1)
 set (HAVE_SETENV 1)
 set (HAVE_STPCPY 1)
 set (HAVE_STRPTIME 1)
-set (HAVE_STRUCT_TM_GMTOFF 1)
 set (HAVE_TIMEGM 1)
 set (HAVE_TOWUPPER 1)
 set (GNC_PLATFORM_POSIX 1)
@@ -875,7 +921,7 @@ add_subdirectory(cmake)
 
 if (BUILDING_FROM_VCS)
     add_custom_target(ChangeLog ALL
-        COMMAND ${GIT_EXECUTABLE} log --format=\"%ad %aN %n%n%x09* %s%d%n\" --date=short --since=2023-01-01 > ${CMAKE_BINARY_DIR}/ChangeLog
+        COMMAND ${GIT_EXECUTABLE} log --format=\"%ad %aN %n%n%x09* %s%d%n\" --date=short --since=2026-01-01 > ${CMAKE_BINARY_DIR}/ChangeLog
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
     install(FILES ${CMAKE_BINARY_DIR}/ChangeLog DESTINATION ${CMAKE_INSTALL_DOCDIR})
@@ -1013,13 +1059,25 @@ install(CODE
 #For windows, copy in some DLLs from Mingw
 
 if (WIN32)
+if ($ENV{MSYSTEM} STREQUAL "CLANG64")
+  find_file(LIBSTDC++ libc++.dll)
+else()
   find_file(LIBSTDC++ libstdc++-6.dll)
+endif()
   if (NOT LIBSTDC++)
     message(FATAL_ERROR "libstdc++ not found.")
   endif()
-  find_file(LIBDW2 libgcc_s_dw2-1.dll)
-  if (NOT LIBDW2)
-    message(FATAL_ERROR "libgcc_s_dw2-l not found.")
+  if(NOT $ENV{MSYSTEM} STREQUAL "CLANG64")
+    if ($ENV{MSYSTEM} STREQUAL "MINGW32")
+      find_file(LIBDW2 libgcc_s_dw2-1.dll)
+    else()
+      find_file(LIBDW2 libgcc_s_seh-1.dll)
+    endif()
+    if (NOT LIBDW2)
+      message(FATAL_ERROR "GCC exception library not found.")
+    endif()
+  else()
+    set(LIBDW2 "")
   endif()
   set(MINGW_DLLS ${LIBSTDC++} ${LIBDW2})
   install(PROGRAMS ${MINGW_DLLS} DESTINATION ${CMAKE_INSTALL_BINDIR})

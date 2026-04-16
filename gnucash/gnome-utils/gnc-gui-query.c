@@ -82,7 +82,37 @@ gnc_ok_cancel_dialog(GtkWindow *parent,
     return(result);
 }
 
+gboolean
+gnc_action_dialog (GtkWindow *parent, const gchar *action,
+                   gboolean action_default, const gchar *format, ...)
+{
+    g_return_val_if_fail (action, FALSE);
 
+    if (!parent)
+        parent = gnc_ui_get_main_window (NULL);
+
+    va_list args;
+    va_start(args, format);
+    gchar *buffer = g_strdup_vprintf(format, args);
+    va_end(args);
+
+    GtkWidget *dialog = gtk_message_dialog_new (parent,
+                                                GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+                                                "%s", buffer);
+
+    gtk_dialog_add_button (GTK_DIALOG(dialog), action, GTK_RESPONSE_ACCEPT);
+    gtk_dialog_add_button (GTK_DIALOG(dialog), _("_Cancel"), GTK_RESPONSE_CANCEL);
+    gtk_dialog_set_default_response (GTK_DIALOG(dialog), action_default ?
+                                     GTK_RESPONSE_ACCEPT : GTK_RESPONSE_CANCEL);
+
+    gint result = gtk_dialog_run(GTK_DIALOG(dialog));
+
+    gtk_widget_destroy (dialog);
+    g_free(buffer);
+
+    return result == GTK_RESPONSE_ACCEPT;
+}
 
 /********************************************************************\
  * gnc_verify_dialog                                                *

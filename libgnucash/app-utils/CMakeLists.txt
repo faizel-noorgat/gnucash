@@ -10,6 +10,7 @@ set (app_utils_HEADERS
   QuickFill.h
   file-utils.h
   gnc-account-merge.h
+  gnc-autoclear.h
   gnc-addr-quickfill.h
   gnc-entry-quickfill.h
   gnc-gsettings.h
@@ -25,6 +26,7 @@ set (app_utils_SOURCES
   QuickFill.c
   file-utils.c
   gnc-account-merge.c
+  gnc-autoclear.cpp
   gnc-addr-quickfill.c
   gnc-entry-quickfill.c
   gnc-gsettings.cpp

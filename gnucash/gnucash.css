@@ -89,8 +89,15 @@ dialog#GnuCash > box > box > label
 {
   font-size: 24px;
 }
-dialog#GnuCash grid * {
-  padding-top: 0px;
-  padding-bottom: 0px;
-  min-height: 4px;
+
+/* Setting the Textview background for light and dark themes */
+.gnc-class-textview * {
+  background-color: rgb(246,245,244);
 }
+.gnc-class-textview-dark * {
+  background-color: rgb(53,53,53);
+}
+dialog#GnuCash * text selection {
+  background-color: rgb(27,106,203);
+}
+

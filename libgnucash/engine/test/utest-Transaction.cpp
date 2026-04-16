@@ -52,6 +52,7 @@ static const char *trans_notes_str = "notes";
 static const char *void_reason_str = "void-reason";
 static const char *void_time_str = "void-time";
 static const char *void_former_notes_str = "void-former-notes";
+static const char *doclink_uri_str = "assoc_uri";
 const char *trans_is_closing_str = "book_closing";
 #define TRANS_DATE_DUE_KVP       "trans-date-due"
 #define TRANS_TXN_TYPE_KVP       "trans-txn-type"
@@ -1745,21 +1746,29 @@ static void
 test_xaccTransGetReadOnly (Fixture *fixture, gconstpointer pData)
 {
     auto txn = fixture->txn;
+    auto frame = fixture->txn->inst.kvp_data;
+
     g_assert_cmpstr (xaccTransGetReadOnly (txn), ==, nullptr);
+    g_assert_null (frame->get_slot({TRANS_READ_ONLY_REASON}));
 
     xaccTransSetReadOnly (txn, "RO");
     g_assert_cmpstr (xaccTransGetReadOnly (txn), ==, "RO");
+    g_assert_cmpstr (frame->get_slot({TRANS_READ_ONLY_REASON})->get<const char*>(), ==, "RO");
 
     xaccTransSetReadOnly (txn, nullptr); // reason being nullptr is a NOP
     g_assert_cmpstr (xaccTransGetReadOnly (txn), ==, "RO");
+    g_assert_cmpstr (frame->get_slot({TRANS_READ_ONLY_REASON})->get<const char*>(), ==, "RO");
 
     xaccTransClearReadOnly (txn);
     g_assert_cmpstr (xaccTransGetReadOnly (txn), ==, nullptr);
+    g_assert_null (frame->get_slot({TRANS_READ_ONLY_REASON}));
 
     xaccTransSetReadOnly (txn, "");
-    g_assert_cmpstr (xaccTransGetReadOnly (txn), ==, "");
+    g_assert_cmpstr (xaccTransGetReadOnly (txn), ==, nullptr);
+    g_assert_null (frame->get_slot({TRANS_READ_ONLY_REASON}));
 
     xaccTransClearReadOnly (txn);
+    g_assert_null (frame->get_slot({TRANS_READ_ONLY_REASON}));
 }
 
 
@@ -1807,6 +1816,26 @@ test_xaccTransGetTxnType (Fixture *fixture, gconstpointer pData)
     g_assert_cmpint (TXN_TYPE_NONE, ==, xaccTransGetTxnType(txn));
 }
 
+
+static void
+test_xaccTransGetDateDue (Fixture *fixture, gconstpointer pData)
+{
+    auto txn = fixture->txn;
+    auto frame = txn->inst.kvp_data;
+
+    // if there's no date_due kvp, return posted_date
+    g_assert_cmpint (xaccTransRetDateDue(txn), ==, xaccTransRetDatePosted(txn));
+    g_assert_null (frame->get_slot({TRANS_DATE_DUE_KVP}));
+
+    xaccTransSetDateDue (txn, 100);
+    g_assert_cmpint (xaccTransRetDateDue(txn), ==, 100);
+    g_assert_cmpint (frame->get_slot({TRANS_DATE_DUE_KVP})->get_ptr<Time64>()->t, ==, 100);
+
+    xaccTransSetDateDue (txn, 0);
+    g_assert_cmpint (frame->get_slot({TRANS_DATE_DUE_KVP})->get_ptr<Time64>()->t, ==, 0);
+    g_assert_cmpint (xaccTransRetDateDue(txn), ==, 0);
+}
+
 /* xaccTransGetReadOnly C: 7 in 5  Local: 1:0:0
  * xaccTransIsReadonlyByPostedDate C: 2 in 2  Local: 0:0:0
  * xaccTransHasReconciledSplitsByAccount Local: 1:0:0
@@ -1828,24 +1857,60 @@ void
 xaccTransUnvoid (Transaction *trans)// C: 1  Local: 0:0:0
 */
 
+
+static void
+test_xaccTransSetNotes (Fixture *fixture, gconstpointer pData)
+{
+    auto trans = fixture->txn;
+    auto frame = fixture->txn->inst.kvp_data;
+
+    xaccTransSetNotes (trans, "set");
+    g_assert_cmpstr (xaccTransGetNotes (trans), ==, "set");
+    g_assert_cmpstr (frame->get_slot({trans_notes_str})->get<const char*>(), ==, "set");
+
+    xaccTransSetNotes (trans, "");
+    g_assert_cmpstr (xaccTransGetNotes (trans), ==, nullptr);
+    g_assert_null (frame->get_slot({trans_notes_str}));
+
+    xaccTransSetNotes (trans, "reset");
+    g_assert_cmpstr (xaccTransGetNotes (trans), ==, "reset");
+    g_assert_cmpstr (frame->get_slot({trans_notes_str})->get<const char*>(), ==, "reset");
+
+    // calling xaccTransSetNotes with notes==null is currently NOP
+    xaccTransSetNotes (trans, NULL);
+    g_assert_cmpstr (xaccTransGetNotes (trans), ==, "reset");
+    g_assert_cmpstr (frame->get_slot({trans_notes_str})->get<const char*>(), ==, "reset");
+}
+
 static void
 test_xaccTransSetDocLink (Fixture *fixture, gconstpointer pData)
 {
     auto trans = fixture->txn;
+    auto frame = fixture->txn->inst.kvp_data;
 
     g_assert_cmpstr (xaccTransGetDocLink (trans), ==, NULL);
+    g_assert_null (frame->get_slot({doclink_uri_str}));
 
     xaccTransSetDocLink (trans, "doclink");
     g_assert_cmpstr (xaccTransGetDocLink (trans), ==, "doclink");
+    g_assert_cmpstr (frame->get_slot({doclink_uri_str})->get<const char*>(), ==, "doclink");
 
     xaccTransSetDocLink (trans, "unset");
     g_assert_cmpstr (xaccTransGetDocLink (trans), ==, "unset");
+    g_assert_cmpstr (frame->get_slot({doclink_uri_str})->get<const char*>(), ==, "unset");
 
     xaccTransSetDocLink (trans, "");
     g_assert_cmpstr (xaccTransGetDocLink (trans), ==, NULL);
+    g_assert_null (frame->get_slot({doclink_uri_str}));
 
+    xaccTransSetDocLink (trans, "reset");
+    g_assert_cmpstr (xaccTransGetDocLink (trans), ==, "reset");
+    g_assert_cmpstr (frame->get_slot({doclink_uri_str})->get<const char*>(), ==, "reset");
+
+    // calling xaccTransSetDocLink with doclink==null is currently NOP
     xaccTransSetDocLink (trans, NULL);
-    g_assert_cmpstr (xaccTransGetDocLink (trans), ==, NULL);
+    g_assert_cmpstr (xaccTransGetDocLink (trans), ==, "reset");
+    g_assert_cmpstr (frame->get_slot({doclink_uri_str})->get<const char*>(), ==, "reset");
 }
 
 static void
@@ -2049,8 +2114,10 @@ test_suite_transaction (void)
     GNC_TEST_ADD (suitename, "xaccTransRollbackEdit - Backend Errors", Fixture, NULL, setup, test_xaccTransRollbackEdit_BackendErrors, teardown);
     GNC_TEST_ADD (suitename, "xaccTransOrder_num_action", Fixture, NULL, setup, test_xaccTransOrder_num_action, teardown);
     GNC_TEST_ADD (suitename, "xaccTransGetTxnType", Fixture, NULL, setup, test_xaccTransGetTxnType, teardown);
+    GNC_TEST_ADD (suitename, "xaccTransGetDateDue", Fixture, NULL, setup, test_xaccTransGetDateDue, teardown);
     GNC_TEST_ADD (suitename, "xaccTransGetreadOnly", Fixture, NULL, setup, test_xaccTransGetReadOnly, teardown);
     GNC_TEST_ADD (suitename, "xaccTransSetDocLink", Fixture, NULL, setup, test_xaccTransSetDocLink, teardown);
+    GNC_TEST_ADD (suitename, "xaccTransSetNotes", Fixture, NULL, setup, test_xaccTransSetNotes, teardown);
     GNC_TEST_ADD (suitename, "xaccTransVoid", Fixture, NULL, setup, test_xaccTransVoid, teardown);
     GNC_TEST_ADD (suitename, "xaccTransReverse", Fixture, NULL, setup, test_xaccTransReverse, teardown);
     GNC_TEST_ADD (suitename, "xaccTransScrubGainsDate_no_dirty", GainsFixture, NULL, setup_with_gains, test_xaccTransScrubGainsDate_no_dirty, teardown_with_gains);

@@ -140,6 +140,10 @@ void gnc_file_do_export(GtkWindow *parent, const char* filename);
 void gnc_file_do_save_as(GtkWindow *parent, const char* filename);
 void gnc_file_revert (GtkWindow *parent);
 
+GList* gnc_file_chooser_get_datafile_filters (void);
+
+void gnc_file_chooser_add_filters (GtkFileChooser* file_box, GList *filters);
+
 /** Tell the user about errors in the backends
 
 */

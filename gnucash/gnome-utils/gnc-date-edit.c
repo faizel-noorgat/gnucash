@@ -455,6 +455,8 @@ fill_time_combo (GtkWidget *widget, GNCDateEdit *gde)
 
     model = gtk_combo_box_get_model (GTK_COMBO_BOX(gde->time_combo));
 
+    gtk_tree_store_clear (GTK_TREE_STORE(model));
+
     gnc_time (&current_time);
     tm_returned = gnc_localtime_r (&current_time, &mtm);
     g_return_if_fail(tm_returned != NULL);

@@ -2851,13 +2851,11 @@ gnc_ui_qif_import_commodity_notebook_update_combos (QIFImportWindow * wind, gboo
 
     for (pageptr = wind->commodity_notebook_pages; pageptr; pageptr = pageptr->next)
     {
-        const gchar *ns;
-
         notebook_page = pageptr->data;
         comm_nb_page = g_object_get_data (G_OBJECT(notebook_page), "page_struct");
 
         /* Get any entered namespace. */
-        ns = gnc_ui_namespace_picker_ns (comm_nb_page->namespace_combo);
+        gchar *ns = gnc_ui_namespace_picker_ns (comm_nb_page->namespace_combo);
 
         /* Update the namespaces available to select. */
         if (!ns || !ns[0])
@@ -2873,6 +2871,7 @@ gnc_ui_qif_import_commodity_notebook_update_combos (QIFImportWindow * wind, gboo
         }
         else
             gnc_ui_update_namespace_picker (comm_nb_page->namespace_combo, ns, DIAG_COMM_ALL);
+        g_free (ns);
     }
 }
 

@@ -90,7 +90,6 @@ test_dom_tree_to_text (void)
     for (i = 0; i < 20; i++)
     {
         gchar* test_string1;
-        gchar* test_string2;
         xmlNodePtr test_node;
 
         test_node = xmlNewNode (NULL, BAD_CAST "test-node");
@@ -98,7 +97,7 @@ test_dom_tree_to_text (void)
 
         xmlNodeAddContent (test_node, BAD_CAST test_string1);
 
-        test_string2 = dom_tree_to_text (test_node);
+        auto test_string2 = dom_tree_to_text (test_node);
 
         if (!test_string2)
         {
@@ -106,7 +105,7 @@ test_dom_tree_to_text (void)
                           "null return from dom_tree_to_text");
             xmlElemDump (stdout, NULL, test_node);
         }
-        else if (g_strcmp0 (test_string1, test_string2) == 0)
+        else if (g_strcmp0 (test_string1, test_string2->c_str()) == 0)
         {
             success_args ("dom_tree_to_text", __FILE__, __LINE__, "with string %s",
                           test_string1);
@@ -119,7 +118,6 @@ test_dom_tree_to_text (void)
 
         xmlFreeNode (test_node);
         g_free (test_string1);
-        if (test_string2) g_free (test_string2);
     }
 }
 
@@ -219,7 +217,6 @@ test_dom_tree_to_guid (void)
     for (i = 0; i < 20; i++)
     {
         GncGUID* test_guid1;
-        GncGUID* test_guid2;
         xmlNodePtr test_node;
 
         test_guid1 = get_random_guid ();
@@ -230,14 +227,13 @@ test_dom_tree_to_guid (void)
                           "conversion to dom tree failed");
         }
 
-        test_guid2 = dom_tree_to_guid (test_node);
+        auto test_guid2 = dom_tree_to_guid (test_node);
 
-        do_test (guid_equal (test_guid1, test_guid2),
+        do_test (guid_equal (test_guid1, &*test_guid2),
                  "dom_tree_to_guid");
 
         xmlFreeNode (test_node);
         guid_free (test_guid1);
-        guid_free (test_guid2);
     }
 }
 

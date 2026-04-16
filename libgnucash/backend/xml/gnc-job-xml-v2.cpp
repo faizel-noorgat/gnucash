@@ -101,37 +101,22 @@ struct job_pdata
 };
 
 static gboolean
-set_string (xmlNodePtr node, GncJob* job,
-            void (*func) (GncJob* job, const char* txt))
-{
-    char* txt = dom_tree_to_text (node);
-    g_return_val_if_fail (txt, FALSE);
-
-    func (job, txt);
-
-    g_free (txt);
-
-    return TRUE;
-}
-
-static gboolean
 job_name_handler (xmlNodePtr node, gpointer job_pdata)
 {
     struct job_pdata* pdata = static_cast<decltype (pdata)> (job_pdata);
 
-    return set_string (node, pdata->job, gncJobSetName);
+    return apply_xmlnode_text (gncJobSetName, pdata->job, node);
 }
 
 static gboolean
 job_guid_handler (xmlNodePtr node, gpointer job_pdata)
 {
     struct job_pdata* pdata = static_cast<decltype (pdata)> (job_pdata);
-    GncGUID* guid;
     GncJob* job;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
-    job = gncJobLookup (pdata->book, guid);
+    job = gncJobLookup (pdata->book, &*guid);
     if (job)
     {
         gncJobDestroy (pdata->job);
@@ -140,10 +125,8 @@ job_guid_handler (xmlNodePtr node, gpointer job_pdata)
     }
     else
     {
-        gncJobSetGUID (pdata->job, guid);
+        gncJobSetGUID (pdata->job, &*guid);
     }
-
-    guid_free (guid);
 
     return TRUE;
 }
@@ -153,7 +136,7 @@ job_id_handler (xmlNodePtr node, gpointer job_pdata)
 {
     struct job_pdata* pdata = static_cast<decltype (pdata)> (job_pdata);
 
-    return set_string (node, pdata->job, gncJobSetID);
+    return apply_xmlnode_text (gncJobSetID, pdata->job, node);
 }
 
 static gboolean
@@ -161,7 +144,7 @@ job_reference_handler (xmlNodePtr node, gpointer job_pdata)
 {
     struct job_pdata* pdata = static_cast<decltype (pdata)> (job_pdata);
 
-    return set_string (node, pdata->job, gncJobSetReference);
+    return apply_xmlnode_text (gncJobSetReference, pdata->job, node);
 }
 
 static gboolean

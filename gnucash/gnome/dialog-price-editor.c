@@ -267,12 +267,18 @@ gui_to_price (PriceEditDialog *pedit_dialog)
 
     commodity = gnc_commodity_table_find_full(gnc_get_current_commodities(), name_space, fullname);
     if (!commodity)
+    {
+        g_free (name_space);
         return _("You must select a Security.");
+    }
 
     currency = gnc_currency_edit_get_currency
                (GNC_CURRENCY_EDIT (pedit_dialog->currency_edit));
     if (!currency)
+    {
+        g_free (name_space);
         return _("You must select a Currency.");
+    }
 
     date = gnc_date_edit_get_date (GNC_DATE_EDIT (pedit_dialog->date_edit));
 
@@ -286,7 +292,10 @@ gui_to_price (PriceEditDialog *pedit_dialog)
     gnc_amount_edit_set_fraction (GNC_AMOUNT_EDIT (pedit_dialog->price_edit), 0);
 
     if (!gnc_amount_edit_evaluate (GNC_AMOUNT_EDIT (pedit_dialog->price_edit), NULL))
+    {
+        g_free (name_space);
         return _("You must enter a valid amount.");
+    }
 
     value = gnc_amount_edit_get_amount
             (GNC_AMOUNT_EDIT (pedit_dialog->price_edit));

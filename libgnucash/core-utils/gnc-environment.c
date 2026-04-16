@@ -22,6 +22,9 @@
  */
 
 #include <glib.h>
+#include <stdbool.h>
+#include <stdio.h>
+
 #include <string.h>
 #include "gnc-environment.h"
 #include "gnc-path.h"
@@ -96,6 +99,17 @@ static gchar  *environment_expand(gchar *param)
     return expanded;
 }
 
+static bool
+char_array_contains(const char **array, unsigned num_keys, const char *key)
+{
+    for (unsigned i = 0; i < num_keys; ++i)
+    {
+        if (strcmp(key, array[i]) == 0)
+            return true;
+    }
+    return false;
+}
+
 static void
 gnc_environment_parse_one (const gchar *env_path)
 {
@@ -104,6 +118,9 @@ gnc_environment_parse_one (const gchar *env_path)
     gsize param_count;
     gint i;
     gboolean got_keyfile;
+    const unsigned num_keys = 6;
+    const char *reserved_keys[] = {"GNC_HOME", "GNC_BIN", "GNC_LIB",
+        "GNC_DATA", "GNC_CONF", "SYS_LIB"};
 
     got_keyfile = g_key_file_load_from_file (keyfile, env_path, G_KEY_FILE_NONE, NULL);
     if ( !got_keyfile )
@@ -120,8 +137,10 @@ gnc_environment_parse_one (const gchar *env_path)
         gsize val_count;
         gint j;
         gchar *new_val = NULL, *tmp_val;
+        if (char_array_contains(reserved_keys, num_keys, env_vars[i]))
+            continue;
 
-        /* For each variable, read its new value, optionally expand it and set/unset it */
+        /* for each variable, read its new value, optionally expand it and set/unset it */
         val_list = g_key_file_get_string_list (keyfile, "Variables",
                                                env_vars[i], &val_count,
                                                NULL);
@@ -170,27 +189,27 @@ gnc_environment_setup (void)
 
     /* Export default parameters to the environment */
     env_parm = gnc_path_get_prefix();
-    if (!g_setenv("GNC_HOME", env_parm, FALSE))
+    if (!g_setenv("GNC_HOME", env_parm, TRUE))
         g_warning ("Couldn't set/override environment variable GNC_HOME.");
     g_free (env_parm);
     env_parm = gnc_path_get_bindir();
-    if (!g_setenv("GNC_BIN", env_parm, FALSE))
+    if (!g_setenv("GNC_BIN", env_parm, TRUE))
         g_warning ("Couldn't set/override environment variable GNC_BIN.");
     g_free (env_parm);
     env_parm = gnc_path_get_pkglibdir();
-    if (!g_setenv("GNC_LIB", env_parm, FALSE))
+    if (!g_setenv("GNC_LIB", env_parm, TRUE))
         g_warning ("Couldn't set/override environment variable GNC_LIB.");
     g_free (env_parm);
     env_parm = gnc_path_get_pkgdatadir();
-    if (!g_setenv("GNC_DATA", env_parm, FALSE))
+    if (!g_setenv("GNC_DATA", env_parm, TRUE))
         g_warning ("Couldn't set/override environment variable GNC_DATA.");
     g_free (env_parm);
     env_parm = gnc_path_get_pkgsysconfdir();
-    if (!g_setenv("GNC_CONF", env_parm, FALSE))
+    if (!g_setenv("GNC_CONF", env_parm, TRUE))
         g_warning ("Couldn't set/override environment variable GNC_CONF.");
     g_free (env_parm);
     env_parm = gnc_path_get_libdir();
-    if (!g_setenv("SYS_LIB", env_parm, FALSE))
+    if (!g_setenv("SYS_LIB", env_parm, TRUE))
         g_warning ("Couldn't set/override environment variable SYS_LIB.");
     g_free (env_parm);
 

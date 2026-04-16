@@ -21,7 +21,6 @@
  *                                                                  *
  ********************************************************************/
 
-#define __EXTENSIONS__
 #include <guid.hpp>
 #include <config.h>
 
@@ -142,24 +141,16 @@ concatenate_child_result_chars (GSList* data_from_children)
 
 
 template <typename T>
-static bool parse_chars_into_num (const char* str, T* num_ptr)
+static bool parse_chars_into_num (std::string_view sv, T* num_ptr)
 {
-    if (!str || !num_ptr)
+    if (!num_ptr)
         return false;
 
-    while (std::isspace (*str))
-        ++str;
+    while (!sv.empty() && std::isspace (sv.front ())) sv.remove_prefix (1);
+    while (!sv.empty() && std::isspace (sv.back ())) sv.remove_suffix (1);
 
-    const char* end_ptr = str + std::strlen (str);
-
-    auto res = std::from_chars (str, end_ptr, *num_ptr);
-    if (res.ec != std::errc{})
-        return false;
-
-    while (std::isspace (*res.ptr))
-        ++res.ptr;
-
-    return (res.ptr == end_ptr);
+    auto res = std::from_chars (sv.begin(), sv.end(), *num_ptr);
+    return (res.ec == std::errc{} && res.ptr == sv.end());
 }
 
 /*********/
@@ -167,16 +158,17 @@ static bool parse_chars_into_num (const char* str, T* num_ptr)
  */
 
 gboolean
-string_to_double (const char* str, double* result)
+string_to_double (std::string_view sv, double* result)
 {
 #if __cpp_lib_to_chars >= 201611L
-    return parse_chars_into_num<double>(str, result);
+    return parse_chars_into_num<double>(sv, result);
 #else
     // because from_chars in cpp < 201611L cannot parse floats
+    g_return_val_if_fail (result, false);
+    std::string str{sv};
     char* endptr = nullptr;
-    g_return_val_if_fail (str && result, false);
-    *result = std::strtod (str, &endptr);
-    return (endptr != str);
+    *result = std::strtod (str.c_str(), &endptr);
+    return (endptr != str.c_str());
 #endif
 }
 
@@ -184,27 +176,27 @@ string_to_double (const char* str, double* result)
 /* gint64
  */
 gboolean
-string_to_gint64 (const gchar* str, gint64* v)
+string_to_gint64 (std::string_view sv, gint64* v)
 {
-    return parse_chars_into_num<gint64>(str, v);
+    return parse_chars_into_num<gint64>(sv, v);
 }
 
 /*********/
 /* guint16
  */
 gboolean
-string_to_guint16 (const gchar* str, guint16* v)
+string_to_guint16 (std::string_view sv, guint16* v)
 {
-    return parse_chars_into_num<guint16>(str, v);
+    return parse_chars_into_num<guint16>(sv, v);
 }
 
 /*********/
 /* guint
  */
 gboolean
-string_to_guint (const gchar* str, guint* v)
+string_to_guint (std::string_view sv, guint* v)
 {
-    return parse_chars_into_num<guint>(str, v);
+    return parse_chars_into_num<guint>(sv, v);
 }
 
 /************/

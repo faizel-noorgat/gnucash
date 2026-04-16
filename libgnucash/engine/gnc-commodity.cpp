@@ -193,7 +193,6 @@ static QuoteSourceList single_quote_sources =
     { false, SOURCE_SINGLE, NC_("FQ Source", "Association of Mutual Funds in India"), "amfiindia" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Athens Exchange Group, GR"), "asegr" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Australian Stock Exchange, AU"), "asx" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "Bloomberg"), "bloomberg" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Italian Stock Exchange, IT"), "borsa_italiana" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "BSE India, IN"), "bseindia" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Bucharest Stock Exchange, RO"), "bvb" },
@@ -201,15 +200,12 @@ static QuoteSourceList single_quote_sources =
     { false, SOURCE_SINGLE, NC_("FQ Source", "comdirect, DE"), "comdirect" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Consors Bank, DE"), "consorsbank" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Deka Investments, DE"), "deka" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "DWS, DE"), "dwsfunds" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Financial Times Funds service, GB"), "ftfunds" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Finanzpartner, DE"), "finanzpartner" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "FondsWeb, DE"), "fondsweb" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "GoldMoney precious metals"), "goldmoney" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Google Web, US Stocks"), "googleweb" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "IEX (Investors Exchange), US"), "iexcloud" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Market Watch"), "marketwatch" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "Morningstar, AU"), "morningstarau" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Morningstar, CH"), "morningstarch" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Morningstar, GB"), "morningstaruk" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Morningstar, JP"), "morningstarjp" },
@@ -221,17 +217,16 @@ static QuoteSourceList single_quote_sources =
     { false, SOURCE_SINGLE, NC_("FQ Source", "S-Investor, DE"), "sinvestor"},
     { false, SOURCE_SINGLE, NC_("FQ Source", "Sharenet, ZA"), "za" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "SIX Swiss Exchange shares, CH"), "six" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "Skandinaviska Enskilda Banken, SE"), "seb_funds" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "StockData"), "stockdata" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Stooq, PL"), "stooq" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "T. Rowe Price, US"), "troweprice" },
+    { false, SOURCE_SINGLE, NC_("FQ Source", "Swiss Fund Data AG, CH"), "swissfunddata" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Tesouro Direto bonds, BR"), "tesouro_direto" },
-    { false, SOURCE_SINGLE, NC_("FQ Source", "TIAA-CREF, US"), "tiaacref" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Toronto Stock eXchange, CA"), "tsx" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Tradegate, DE"), "tradegate" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Treasury Direct bonds, US"), "treasurydirect" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Twelve Data"), "twelvedata" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Union Investment, DE"), "unionfunds" },
+    { false, SOURCE_SINGLE, NC_("FQ Source", "US Savings Bonds, US"), "usbonds" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "US Govt. Thrift Savings Plan"), "tsp" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "XETRA, DE"), "xetra" },
     { false, SOURCE_SINGLE, NC_("FQ Source", "Yahoo as JSON"), "yahoo_json" },
@@ -239,22 +234,14 @@ static QuoteSourceList single_quote_sources =
     { false, SOURCE_SINGLE, NC_("FQ Source", "YH Finance (FinanceAPI)"), "financeapi" },
 };
 
+// Finance::Quote defines these as failover methods
 static QuoteSourceList multiple_quote_sources =
 {
-    { false, SOURCE_MULTI, NC_("FQ Source", "Australia (ASX)"), "australia" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "Australia Funds (MorningstarAU)"), "aufunds" },
     { false, SOURCE_MULTI, NC_("FQ Source", "Canada (Alphavantage, TMX)"), "canada" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "Dutch (AEX)"), "dutch" },
     { false, SOURCE_MULTI, NC_("FQ Source", "Europe (ASEGR, Bourso, …)"), "europe" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "France (Bourso)"), "france" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "Greece (ASEGR)"), "greece" },
     { false, SOURCE_MULTI, NC_("FQ Source", "India (BSEIndia, NSEIndia)"), "india"},
-    { false, SOURCE_MULTI, NC_("FQ Source", "India Mutual (AMFI)"), "indiamutual" },
     { false, SOURCE_MULTI, NC_("FQ Source", "Nasdaq (Alphavantage, FinanceAPI, …)"), "nasdaq" },
     { false, SOURCE_MULTI, NC_("FQ Source", "NYSE (Alphavantage, FinanceAPI, …)"), "nyse" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "Poland (Stooq)"), "poland" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "Romania (BVB)"), "romania" },
-    { false, SOURCE_MULTI, NC_("FQ Source", "South Africa (Sharenet)"), "za" },
     { false, SOURCE_MULTI, NC_("FQ Source", "U.K. Funds (FTfunds, MorningstarUK)"), "ukfunds" },
     { false, SOURCE_MULTI, NC_("FQ Source", "USA (Alphavantage, FinanceAPI, …)"), "usa" },
 };
@@ -1027,19 +1014,12 @@ gnc_commodity_get_fraction(const gnc_commodity * cm)
  * gnc_commodity_get_auto_quote_control_flag
  ********************************************************************/
 
-static gboolean
+gboolean
 gnc_commodity_get_auto_quote_control_flag(const gnc_commodity *cm)
 {
-    GValue v = G_VALUE_INIT;
-    gboolean retval = TRUE;
-
     if (!cm) return FALSE;
-    qof_instance_get_kvp (QOF_INSTANCE (cm), &v, 1, "auto_quote_control");
-    if (G_VALUE_HOLDS_STRING (&v) &&
-        strcmp(g_value_get_string (&v), "false") == 0)
-        retval = FALSE;
-    g_value_unset (&v);
-    return retval;
+    auto str{qof_instance_get_path_kvp<const char*> (QOF_INSTANCE (cm), {"auto_quote_control"})};
+    return !str || g_strcmp0 (*str, "false");
 }
 
 /********************************************************************
@@ -1097,11 +1077,8 @@ gnc_commodity_get_user_symbol(const gnc_commodity *cm)
 {
     g_return_val_if_fail (GNC_IS_COMMODITY (cm), nullptr);
 
-    GValue v = G_VALUE_INIT;
-    qof_instance_get_kvp (QOF_INSTANCE(cm), &v, 1, "user_symbol");
-    const char *rv = G_VALUE_HOLDS_STRING (&v) ? g_value_get_string (&v) : nullptr;
-    g_value_unset (&v);
-    return rv;
+    auto sym{qof_instance_get_path_kvp<const char*> (QOF_INSTANCE(cm), {"user_symbol"})};
+    return sym ? *sym : nullptr;
 }
 
 /********************************************************************
@@ -1255,11 +1232,10 @@ gnc_commodity_set_fraction(gnc_commodity * cm, int fraction)
  * gnc_commodity_set_auto_quote_control_flag
  ********************************************************************/
 
-static void
+void
 gnc_commodity_set_auto_quote_control_flag(gnc_commodity *cm,
         const gboolean flag)
 {
-    GValue v = G_VALUE_INIT;
     ENTER ("(cm=%p, flag=%d)", cm, flag);
 
     if (!cm)
@@ -1268,15 +1244,8 @@ gnc_commodity_set_auto_quote_control_flag(gnc_commodity *cm,
         return;
     }
     gnc_commodity_begin_edit(cm);
-    if (flag)
-        qof_instance_set_kvp (QOF_INSTANCE (cm), nullptr, 1, "auto_quote_control");
-    else
-    {
-        g_value_init (&v, G_TYPE_STRING);
-        g_value_set_string (&v, "false");
-        qof_instance_set_kvp (QOF_INSTANCE (cm), &v, 1, "auto_quote_control");
-    }
-    g_value_unset (&v);
+    auto val = flag ? std::nullopt : std::make_optional<const char*>(g_strdup("false"));
+    qof_instance_set_path_kvp<const char*> (QOF_INSTANCE (cm), val, {"auto_quote_control"});
     mark_commodity_dirty(cm);
     gnc_commodity_commit_edit(cm);
     LEAVE("");
@@ -1407,18 +1376,8 @@ gnc_commodity_set_user_symbol(gnc_commodity * cm, const char * user_symbol)
 
     gnc_commodity_begin_edit (cm);
 
-    if (user_symbol)
-    {
-        GValue v = G_VALUE_INIT;
-        g_value_init (&v, G_TYPE_STRING);
-        g_value_set_static_string (&v, user_symbol);
-        qof_instance_set_kvp (QOF_INSTANCE(cm), &v, 1, "user_symbol");
-        g_value_unset (&v);
-    }
-    else
-    {
-        qof_instance_set_kvp (QOF_INSTANCE(cm), nullptr, 1, "user_symbol");
-    }
+    auto val = user_symbol ? std::make_optional<const char*>(g_strdup(user_symbol)) : std::nullopt;
+    qof_instance_set_path_kvp<const char*> (QOF_INSTANCE(cm), val, {"user_symbol"});
 
     mark_commodity_dirty(cm);
     gnc_commodity_commit_edit(cm);
@@ -1543,13 +1502,13 @@ gnc_commodity_equal(const gnc_commodity * a, const gnc_commodity * b)
     return gnc_commodity_compare(a, b) == 0;
 }
 
-// Used as a sorting callback for deleting old prices, so it needs to be
-// stable but doesn't need to be in any particular order sensible to humans.
 int gnc_commodity_compare(const gnc_commodity * a, const gnc_commodity * b)
 {
     if (a == b) return 0;
     if (a && !b) return 1;
     if (b && !a) return -1;
+    if (auto rv = g_strcmp0 (gnc_commodity_get_unique_name (a), gnc_commodity_get_unique_name (b)))
+        return rv;
     return qof_instance_guid_compare(a, b);
 }
 
@@ -2175,6 +2134,37 @@ gnc_commodity_table_add_namespace(gnc_commodity_table * table,
     return ns;
 }
 
+bool
+gnc_commodity_table_rename_namespace(const gnc_commodity_table * table,
+                                     const char * namespace_name,
+                                     const char * new_namespace_name)
+{
+    if (!table || !namespace_name || !new_namespace_name ||
+        (g_strcmp0 (namespace_name, new_namespace_name) == 0) ||
+        (g_strcmp0 (new_namespace_name, GNC_COMMODITY_NS_ISO_GUI) == 0) ||
+        (g_strcmp0 (new_namespace_name, _(GNC_COMMODITY_NS_ISO_GUI)) == 0) ||
+        gnc_commodity_table_find_namespace (table, new_namespace_name))
+        return false;
+
+    auto ns = gnc_commodity_table_find_namespace (table, namespace_name);
+    if (!ns)
+        return false;
+
+    ns->name = CACHE_INSERT(static_cast<const char*>(new_namespace_name));
+
+    g_hash_table_insert (table->ns_table,
+                         (gpointer) ns->name,
+                         (gpointer) ns);
+
+    g_hash_table_remove (table->ns_table,
+                         (gpointer) namespace_name);
+
+    CACHE_REMOVE(namespace_name);
+
+    qof_instance_set_dirty (&ns->inst);
+    qof_event_gen (&ns->inst, QOF_EVENT_MODIFY, nullptr);
+    return true;
+}
 
 gnc_commodity_namespace *
 gnc_commodity_table_find_namespace(const gnc_commodity_table * table,

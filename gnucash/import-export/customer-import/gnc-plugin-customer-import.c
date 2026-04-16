@@ -107,6 +107,7 @@ gnc_plugin_customer_import_init (GncPluginCustomerImport *plugin)
 static void
 gnc_plugin_customer_import_finalize (GObject *object)
 {
+    G_OBJECT_CLASS (gnc_plugin_customer_import_parent_class)->finalize (object);
 }
 
 /************************************************************

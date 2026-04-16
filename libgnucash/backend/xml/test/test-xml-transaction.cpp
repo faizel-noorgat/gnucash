@@ -79,14 +79,13 @@ find_appropriate_node (xmlNodePtr node, Split* spl)
             }
             else if (g_strcmp0 ((char*)mark2->name, "split:account") == 0)
             {
-                GncGUID* accid = dom_tree_to_guid (mark2);
+                auto accid = dom_tree_to_guid (mark2);
                 Account* account = xaccSplitGetAccount (spl);
 
-                if (guid_equal (accid, xaccAccountGetGUID (account)))
+                if (guid_equal (&*accid, xaccAccountGetGUID (account)))
                 {
                     account_guid_good = TRUE;
                 }
-                guid_free (accid);
             }
 
             if (account_guid_good && amount_good)
@@ -108,36 +107,30 @@ equals_node_val_vs_split_internal (xmlNodePtr node, Split* spl)
     {
         if (g_strcmp0 ((char*)mark->name, "split:id") == 0)
         {
-            GncGUID* id = dom_tree_to_guid (mark);
+            auto id = dom_tree_to_guid (mark);
 
-            if (!guid_equal (id, xaccSplitGetGUID (spl)))
+            if (!guid_equal (&*id, xaccSplitGetGUID (spl)))
             {
-                guid_free (id);
                 return "ids differ";
             }
-            guid_free (id);
         }
         else if (g_strcmp0 ((char*)mark->name, "split:memo") == 0)
         {
-            char* memo = dom_tree_to_text (mark);
+            auto memo = dom_tree_to_text (mark);
 
-            if (g_strcmp0 (memo, xaccSplitGetMemo (spl)) != 0)
+            if (g_strcmp0 (memo->c_str(), xaccSplitGetMemo (spl)) != 0)
             {
-                g_free (memo);
                 return "memos differ";
             }
-            g_free (memo);
         }
         else if (g_strcmp0 ((char*)mark->name, "split:reconciled-state") == 0)
         {
-            char* rs = dom_tree_to_text (mark);
+            auto rs = dom_tree_to_text (mark);
 
-            if (rs[0] != xaccSplitGetReconcile (spl))
+            if (!rs || rs->front() != xaccSplitGetReconcile (spl))
             {
-                g_free (rs);
                 return "states differ";
             }
-            g_free (rs);
         }
         else if (g_strcmp0 ((char*)mark->name, "split:value") == 0)
         {
@@ -178,15 +171,13 @@ equals_node_val_vs_split_internal (xmlNodePtr node, Split* spl)
         }
         else if (g_strcmp0 ((char*)mark->name, "split:account") == 0)
         {
-            GncGUID* id = dom_tree_to_guid (mark);
+            auto id = dom_tree_to_guid (mark);
             Account* account = xaccSplitGetAccount (spl);
 
-            if (!guid_equal (id, xaccAccountGetGUID (account)))
+            if (!guid_equal (&*id, xaccAccountGetGUID (account)))
             {
-                guid_free (id);
                 return "accounts differ";
             }
-            guid_free (id);
         }
     }
     return NULL;

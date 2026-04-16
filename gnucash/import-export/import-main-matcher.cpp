@@ -41,6 +41,8 @@
 #include <memory>
 #include <algorithm>
 #include <vector>
+#include <unordered_map>
+#include <string>
 
 #include "import-main-matcher.h"
 
@@ -63,6 +65,8 @@
 
 #define GNC_PREFS_GROUP "dialogs.import.generic.transaction-list"
 #define IMPORT_MAIN_MATCHER_CM_CLASS "transaction-matcher-dialog"
+
+using StrStrMap = std::unordered_map<std::string,std::string>;
 
 struct _main_matcher_info
 {
@@ -96,6 +100,7 @@ struct _main_matcher_info
     GHashTable *memo_hash;
 
     GList *new_strings;
+    StrStrMap colormap;
 };
 
 enum downloaded_cols
@@ -242,6 +247,7 @@ gnc_gen_trans_list_delete (GNCImportMainMatcher *info)
     g_hash_table_destroy (info->desc_hash);
     g_hash_table_destroy (info->notes_hash);
     g_hash_table_destroy (info->memo_hash);
+    info->colormap.~StrStrMap();
 
     g_list_free_full (info->new_strings, (GDestroyNotify)g_free);
 
@@ -530,7 +536,7 @@ on_matcher_ok_clicked (GtkButton *button, GNCImportMainMatcher *info)
 {
     g_assert (info);
 
-    /*   DEBUG ("Begin") */
+    DEBUG ("Begin");
 
     GtkTreeModel *model = gtk_tree_view_get_model (info->view);
     GtkTreeIter iter;
@@ -590,11 +596,11 @@ on_matcher_ok_clicked (GtkButton *button, GNCImportMainMatcher *info)
 
     gnc_gen_trans_list_delete (info);
 
-    /* Allow GUI refresh again. */
-    gnc_resume_gui_refresh ();
-
-    /* DEBUG ("End") */
+    DEBUG ("End");
     g_list_free_full (accounts_modified, (GDestroyNotify)xaccAccountCommitEdit);
+
+    /* Allow GUI refresh again upon commit completion. */
+    gnc_resume_gui_refresh ();
 }
 
 void
@@ -1551,7 +1557,7 @@ add_text_column (GtkTreeView *view, const gchar *title, int col_num, bool ellips
 
 static GtkTreeViewColumn *
 add_toggle_column (GtkTreeView *view, const gchar *title, int col_num,
-                   GCallback cb_fn, gpointer cb_arg)
+                   GCallback cb_fn, gpointer cb_arg, const gchar *tooltip_text)
 {
     GtkCellRenderer *renderer = gtk_cell_renderer_toggle_new ();
     GtkTreeViewColumn *column = gtk_tree_view_column_new_with_attributes (title, renderer,
@@ -1564,6 +1570,11 @@ add_toggle_column (GtkTreeView *view, const gchar *title, int col_num,
     g_object_set (G_OBJECT(column), "reorderable", true, NULL);
     g_signal_connect (renderer, "toggled", cb_fn, cb_arg);
     gtk_tree_view_append_column (view, column);
+
+    /* Set tooltip on the column header button */
+    if (tooltip_text)
+        gtk_widget_set_tooltip_text (gtk_tree_view_column_get_button (column), tooltip_text);
+
     return column;
 }
 
@@ -1596,15 +1607,18 @@ gnc_gen_trans_init_view (GNCImportMainMatcher *info,
     info->memo_column = add_text_column (view, _("Memo"), DOWNLOADED_COL_MEMO, true);
     add_toggle_column (view, C_("Column header for 'Adding transaction'", "A"),
                        DOWNLOADED_COL_ACTION_ADD,
-                       G_CALLBACK(gnc_gen_trans_add_toggled_cb), info);
+                       G_CALLBACK(gnc_gen_trans_add_toggled_cb), info,
+                       _("Add as a new transaction"));
     GtkTreeViewColumn *column = add_toggle_column (view,
                                 C_("Column header for 'Updating plus Clearing transaction'", "U+C"),
                                 DOWNLOADED_COL_ACTION_UPDATE,
-                                G_CALLBACK(gnc_gen_trans_update_toggled_cb), info);
+                                G_CALLBACK(gnc_gen_trans_update_toggled_cb), info,
+                                _("Update + Clear Transaction\nUpdate existing transaction with the imported data and mark it as cleared"));
     gtk_tree_view_column_set_visible (column, show_update);
     add_toggle_column (view, C_("Column header for 'Clearing transaction'", "C"),
                        DOWNLOADED_COL_ACTION_CLEAR,
-                       G_CALLBACK(gnc_gen_trans_clear_toggled_cb), info);
+                       G_CALLBACK(gnc_gen_trans_clear_toggled_cb), info,
+                       _("Clear Transaction\nMark existing transaction as cleared without changing its details"));
 
     /* The last column has multiple renderers */
     GtkCellRenderer *renderer = gtk_cell_renderer_pixbuf_new ();
@@ -1729,6 +1743,7 @@ gnc_gen_trans_common_setup (GNCImportMainMatcher *info,
     info->memo_hash = g_hash_table_new (g_str_hash, g_str_equal);
     info->new_strings = NULL;
     info->transaction_processed_cb = NULL;
+    new (&info->colormap) StrStrMap();
 
     /* Connect the signals */
     gtk_builder_connect_signals_full (builder, gnc_builder_connect_full_func, info);
@@ -1853,18 +1868,22 @@ gnc_gen_trans_list_run (GNCImportMainMatcher *info)
 }
 
 static const gchar*
-get_required_color (const gchar *class_name)
+get_required_color (StrStrMap& cache, const gchar *class_name)
 {
-    GdkRGBA color;
-    GtkWidget *label = gtk_label_new ("Color");
-    GtkStyleContext *context = gtk_widget_get_style_context (GTK_WIDGET(label));
-    gtk_style_context_add_class (context, class_name);
-    gnc_style_context_get_background_color (context, GTK_STATE_FLAG_NORMAL, &color);
-    static gchar *strbuf = NULL;
-    if (strbuf)
-        g_free (strbuf);
-    strbuf = gdk_rgba_to_string (&color);
-    return strbuf;
+    auto& rv = cache[class_name];
+    if (rv.empty())
+    {
+        GdkRGBA color;
+        GtkWidget *label = gtk_label_new ("Color");
+        GtkStyleContext *context = gtk_widget_get_style_context (GTK_WIDGET(label));
+        gtk_style_context_add_class (context, class_name);
+        gnc_style_context_get_background_color (context, GTK_STATE_FLAG_NORMAL, &color);
+        gchar* col_str = gdk_rgba_to_string (&color);
+        rv = col_str;
+        g_free (col_str);
+        gtk_widget_destroy (label);
+    }
+    return rv.c_str();
 }
 
 static void
@@ -2002,7 +2021,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
         if (gnc_import_TransInfo_is_balanced (info))
         {
             ro_text = _("New, already balanced");
-            color = get_required_color (int_not_required_class);
+            color = get_required_color (gui->colormap, int_not_required_class);
         }
         else
         {
@@ -2017,7 +2036,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
                     GNCPrintAmountInfo pinfo = gnc_commodity_print_info (
                         xaccAccountGetCommodity (dest_acc), true);
                     imbalance = g_strdup (xaccPrintAmount (bal_amt, pinfo));
-                    color = get_required_color (int_not_required_class);
+                    color = get_required_color (gui->colormap, int_not_required_class);
                     if (gnc_import_TransInfo_get_destacc_selected_manually (info))
                     {
                         text =
@@ -2041,7 +2060,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
                         xaccTransGetCurrency (gnc_import_TransInfo_get_trans (info)), true);
                     gnc_numeric bal_val = gnc_import_TransInfo_get_dest_value (info);
                     imbalance = g_strdup (xaccPrintAmount (bal_val, pinfo));
-                    color = get_required_color (int_required_class);
+                    color = get_required_color (gui->colormap, int_required_class);
                     text =
                     /* Translators: %s is the amount to be transferred. */
                     g_strdup_printf (_("New, UNBALANCED (need price to transfer %s to acct %s)!"),
@@ -2057,7 +2076,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
                     xaccTransGetCurrency (gnc_import_TransInfo_get_trans (info)), true);
                 gnc_numeric bal_val = gnc_import_TransInfo_get_dest_value (info);
                 imbalance = g_strdup (xaccPrintAmount (bal_val, pinfo));
-                color = get_required_color (int_prob_required_class);
+                color = get_required_color (gui->colormap, int_prob_required_class);
                 text =
                     /* Translators: %s is the amount to be transferred. */
                     g_strdup_printf (_("New, UNBALANCED (need acct to transfer %s)!"),
@@ -2075,7 +2094,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
             if (sel_match)
             {
                 gchar *full_names = get_peer_acct_names (sel_match->split);
-                color = get_required_color (int_not_required_class);
+                color = get_required_color (gui->colormap, int_not_required_class);
                 if (gnc_import_TransInfo_get_match_selected_manually (info))
                 {
                     text = g_strdup_printf (_("Reconcile (manual) match to %s"),
@@ -2091,7 +2110,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
             }
             else
             {
-                color = get_required_color (int_required_class);
+                color = get_required_color (gui->colormap, int_required_class);
                 ro_text = _("Match missing!");
                 show_pixbuf = false;
                 remove_child_row (model, iter);
@@ -2104,7 +2123,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
             if (sel_match)
             {
                 gchar *full_names = get_peer_acct_names (sel_match->split);
-                color = get_required_color (int_not_required_class);
+                color = get_required_color (gui->colormap, int_not_required_class);
                 if (gnc_import_TransInfo_get_match_selected_manually (info))
                 {
                     text = g_strdup_printf (_("Update and reconcile (manual) match to %s"),
@@ -2120,7 +2139,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
             }
             else
             {
-                color = get_required_color (int_required_class);
+                color = get_required_color (gui->colormap, int_required_class);
                 ro_text = _("Match missing!");
                 show_pixbuf = false;
                 remove_child_row (model, iter);
@@ -2128,7 +2147,7 @@ refresh_model_row (GNCImportMainMatcher *gui,
         }
         break;
     case GNCImport_SKIP:
-        color = get_required_color (int_required_class);
+        color = get_required_color (gui->colormap, int_required_class);
         ro_text = _("Do not import (no action selected)");
         show_pixbuf = false;
         remove_child_row (model, iter);
@@ -2249,7 +2268,7 @@ gnc_gen_trans_list_add_trans_internal (GNCImportMainMatcher *gui, Transaction *t
     {
         /* If it does, abort the process for this transaction, since
            it is already in the system. */
-        DEBUG("%s", "Transaction with same online ID exists, destroying current transaction");
+        DEBUG("Transaction with online ID exists, destroying current transaction");
         xaccTransDestroy(trans);
         xaccTransCommitEdit(trans);
         return;

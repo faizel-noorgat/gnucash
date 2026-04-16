@@ -98,7 +98,7 @@ get_all_transactions (Account *account, bool descendants)
 {
     TransSet set;
     auto add_transactions = [&set](auto a)
-    { gnc_account_foreach_split (a, [&set](auto s){ set.insert (xaccSplitGetParent (s)); }, false); };
+    { gnc_account_foreach_split (a, [&set](auto s){ set.insert (xaccSplitGetParent (s)); }); };
     add_transactions (account);
     if (descendants)
         gnc_account_foreach_descendant (account, add_transactions);
@@ -566,11 +566,13 @@ get_trading_split (Transaction *trans, Account *base,
     if (!balance_split)
     {
         balance_split = xaccMallocSplit (qof_instance_get_book(trans));
+        xaccDisableDataScrubbing();
 
         xaccTransBeginEdit (trans);
         xaccSplitSetParent(balance_split, trans);
         xaccSplitSetAccount(balance_split, account);
         xaccTransCommitEdit (trans);
+        xaccEnableDataScrubbing();
     }
 
     return balance_split;
@@ -592,9 +594,6 @@ add_balance_split (Transaction *trans, gnc_numeric imbalance,
         LEAVE("");
         return;
     }
-    account = xaccSplitGetAccount(balance_split);
-
-    xaccTransBeginEdit (trans);
 
     old_value = xaccSplitGetValue (balance_split);
 
@@ -605,8 +604,25 @@ add_balance_split (Transaction *trans, gnc_numeric imbalance,
                                  gnc_commodity_get_fraction(currency),
                                  GNC_HOW_RND_ROUND_HALF_UP);
 
-    xaccSplitSetValue (balance_split, new_value);
+    if (gnc_numeric_zero_p (new_value))
+    {
+        const char *p;
+        p = xaccSplitGetMemo (balance_split);
+        if (!p || !*p)
+        {
+            p = xaccSplitGetAction (balance_split);
+            if (!p || !*p)
+            {
+                xaccSplitDestroy (balance_split);
+                return;
+            }
+        }
+    }
 
+    xaccTransBeginEdit (trans);
+    xaccSplitSetValue (balance_split, new_value);
+        
+    account = xaccSplitGetAccount(balance_split);
     commodity = xaccAccountGetCommodity (account);
     if (gnc_commodity_equiv (currency, commodity))
     {

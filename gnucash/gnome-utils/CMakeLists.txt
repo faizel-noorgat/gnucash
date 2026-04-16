@@ -48,7 +48,6 @@ set (gnome_utils_SOURCES
   dialog-utils.c
   gnc-account-sel.c
   gnc-amount-edit.c
-  gnc-autoclear.c
   gnc-autosave.c
   gnc-cell-renderer-text-flag.c
   gnc-cell-renderer-text-view.c
@@ -135,7 +134,6 @@ set (gnome_utils_HEADERS
   dialog-utils.h
   gnc-account-sel.h
   gnc-amount-edit.h
-  gnc-autoclear.h
   gnc-cell-renderer-text-flag.h
   gnc-cell-renderer-text-view.h
   gnc-cell-view.h
@@ -219,7 +217,7 @@ if (BUILDING_FROM_VCS)
   target_compile_definitions(gnc-gnome-utils PRIVATE -DGNC_VCS=\"git\")
 endif()
 
-if (MAC_INTEGRATION)
+if (APPLE)
   target_compile_options(gnc-gnome-utils PRIVATE ${OSX_EXTRA_COMPILE_FLAGS})
   target_link_libraries(gnc-gnome-utils ${OSX_EXTRA_LIBRARIES})
 endif()

@@ -139,8 +139,11 @@ gnc_autoclear_window_ok_cb (GtkWidget *widget,
         toclear_value = gnc_numeric_convert
             (toclear_value, xaccAccountGetCommoditySCU(data->account), GNC_HOW_RND_ROUND);
 
-        gnc_autoclear_get_splits (data->account, toclear_value, INT64_MAX,
-                                  &toclear_list, &error, data->status_label);
+#define MAX_AUTOCLEAR_SECONDS 5
+
+        toclear_list = gnc_account_get_autoclear_splits
+            (data->account, toclear_value, INT64_MAX, &error,
+             MAX_AUTOCLEAR_SECONDS);
     }
 
     if (error && error->message)

@@ -269,6 +269,12 @@ qof_log_shutdown (void)
         fout = nullptr;
     }
 
+    if (qof_logger_format)
+    {
+        g_free (qof_logger_format);
+        qof_logger_format = nullptr;
+    }
+
     if (function_buffer)
     {
         g_free(function_buffer);

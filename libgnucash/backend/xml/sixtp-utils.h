@@ -59,13 +59,13 @@ void generic_free_data_for_children (gpointer data_for_children,
 
 gchar* concatenate_child_result_chars (GSList* data_from_children);
 
-gboolean string_to_double (const char* str, double* result);
+gboolean string_to_double (std::string_view, double* result);
 
-gboolean string_to_gint64 (const gchar* str, gint64* v);
+gboolean string_to_gint64 (std::string_view, gint64* v);
 
-gboolean string_to_guint16 (const gchar* str, guint16* v);
+gboolean string_to_guint16 (std::string_view, guint16* v);
 
-gboolean string_to_guint (const gchar* str, guint* v);
+gboolean string_to_guint (std::string_view, guint* v);
 
 gboolean hex_string_to_binary (const gchar* str,  void** v, guint64* data_len);
 

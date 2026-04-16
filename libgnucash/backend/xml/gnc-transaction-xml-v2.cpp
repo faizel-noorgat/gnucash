@@ -200,20 +200,6 @@ struct split_pdata
 };
 
 static inline gboolean
-set_spl_string (xmlNodePtr node, Split* spl,
-                void (*func) (Split* spl, const char* txt))
-{
-    gchar* tmp = dom_tree_to_text (node);
-    g_return_val_if_fail (tmp, FALSE);
-
-    func (spl, tmp);
-
-    g_free (tmp);
-
-    return TRUE;
-}
-
-static inline gboolean
 set_spl_gnc_num (xmlNodePtr node, Split* spl,
                  void (*func) (Split* spl, gnc_numeric gn))
 {
@@ -225,12 +211,11 @@ static gboolean
 spl_id_handler (xmlNodePtr node, gpointer data)
 {
     struct split_pdata* pdata = static_cast<decltype (pdata)> (data);
-    GncGUID* tmp = dom_tree_to_guid (node);
+    auto tmp = dom_tree_to_guid (node);
     g_return_val_if_fail (tmp, FALSE);
 
-    xaccSplitSetGUID (pdata->split, tmp);
+    xaccSplitSetGUID (pdata->split, &*tmp);
 
-    guid_free (tmp);
     return TRUE;
 }
 
@@ -238,28 +223,25 @@ static gboolean
 spl_memo_handler (xmlNodePtr node, gpointer data)
 {
     struct split_pdata* pdata = static_cast<decltype (pdata)> (data);
-    return set_spl_string (node, pdata->split, xaccSplitSetMemo);
+    return apply_xmlnode_text (xaccSplitSetMemo, pdata->split, node);
 }
 
 static gboolean
 spl_action_handler (xmlNodePtr node, gpointer data)
 {
     struct split_pdata* pdata = static_cast<decltype (pdata)> (data);
-    return set_spl_string (node, pdata->split, xaccSplitSetAction);
+    return apply_xmlnode_text (xaccSplitSetAction, pdata->split, node);
 }
 
 static gboolean
 spl_reconciled_state_handler (xmlNodePtr node, gpointer data)
 {
     struct split_pdata* pdata = static_cast<decltype (pdata)> (data);
-    gchar* tmp = dom_tree_to_text (node);
-    g_return_val_if_fail (tmp, FALSE);
-
-    xaccSplitSetReconcile (pdata->split, tmp[0]);
-
-    g_free (tmp);
-
-    return TRUE;
+    auto set_reconciled = [](Split* s, const char *txt)
+    {
+        xaccSplitSetReconcile(s, txt[0]);
+    };
+    return apply_xmlnode_text (set_reconciled, pdata->split, node);
 }
 
 static gboolean
@@ -292,24 +274,22 @@ static gboolean
 spl_account_handler (xmlNodePtr node, gpointer data)
 {
     struct split_pdata* pdata = static_cast<decltype (pdata)> (data);
-    GncGUID* id = dom_tree_to_guid (node);
+    auto id = dom_tree_to_guid (node);
     Account* account;
 
     g_return_val_if_fail (id, FALSE);
 
-    account = xaccAccountLookup (id, pdata->book);
+    account = xaccAccountLookup (&*id, pdata->book);
     if (!account && gnc_transaction_xml_v2_testing &&
-        !guid_equal (id, guid_null ()))
+        !guid_equal (&*id, guid_null ()))
     {
         account = xaccMallocAccount (pdata->book);
-        xaccAccountSetGUID (account, id);
+        xaccAccountSetGUID (account, &*id);
         xaccAccountSetCommoditySCU (account,
                                     xaccSplitGetAmount (pdata->split).denom);
     }
 
     xaccAccountInsertSplit (account, pdata->split);
-
-    guid_free (id);
 
     return TRUE;
 }
@@ -318,22 +298,20 @@ static gboolean
 spl_lot_handler (xmlNodePtr node, gpointer data)
 {
     struct split_pdata* pdata = static_cast<decltype (pdata)> (data);
-    GncGUID* id = dom_tree_to_guid (node);
+    auto id = dom_tree_to_guid (node);
     GNCLot* lot;
 
     g_return_val_if_fail (id, FALSE);
 
-    lot = gnc_lot_lookup (id, pdata->book);
+    lot = gnc_lot_lookup (&*id, pdata->book);
     if (!lot && gnc_transaction_xml_v2_testing &&
-        !guid_equal (id, guid_null ()))
+        !guid_equal (&*id, guid_null ()))
     {
         lot = gnc_lot_new (pdata->book);
         gnc_lot_set_guid (lot, *id);
     }
 
     gnc_lot_add_split (lot, pdata->split);
-
-    guid_free (id);
 
     return TRUE;
 }
@@ -400,23 +378,6 @@ struct trans_pdata
     QofBook* book;
 };
 
-static inline gboolean
-set_tran_string (xmlNodePtr node, Transaction* trn,
-                 void (*func) (Transaction* trn, const char* txt))
-{
-    gchar* tmp;
-
-    tmp = dom_tree_to_text (node);
-
-    g_return_val_if_fail (tmp, FALSE);
-
-    func (trn, tmp);
-
-    g_free (tmp);
-
-    return TRUE;
-}
-
 static gboolean
 set_tran_time64 (xmlNodePtr node, Transaction * trn,
         void (*func) (Transaction *, time64))
@@ -432,13 +393,11 @@ trn_id_handler (xmlNodePtr node, gpointer trans_pdata)
 {
     struct trans_pdata* pdata = static_cast<decltype (pdata)> (trans_pdata);
     Transaction* trn = pdata->trans;
-    GncGUID* tmp = dom_tree_to_guid (node);
+    auto tmp = dom_tree_to_guid (node);
 
     g_return_val_if_fail (tmp, FALSE);
 
-    xaccTransSetGUID ((Transaction*)trn, tmp);
-
-    guid_free (tmp);
+    xaccTransSetGUID ((Transaction*)trn, &*tmp);
 
     return TRUE;
 }
@@ -462,7 +421,7 @@ trn_num_handler (xmlNodePtr node, gpointer trans_pdata)
     struct trans_pdata* pdata = static_cast<decltype (pdata)> (trans_pdata);
     Transaction* trn = pdata->trans;
 
-    return set_tran_string (node, trn, xaccTransSetNum);
+    return apply_xmlnode_text (xaccTransSetNum, trn, node);
 }
 
 static gboolean
@@ -489,7 +448,7 @@ trn_description_handler (xmlNodePtr node, gpointer trans_pdata)
     struct trans_pdata* pdata = static_cast<decltype (pdata)> (trans_pdata);
     Transaction* trn = pdata->trans;
 
-    return set_tran_string (node, trn, xaccTransSetDescription);
+    return apply_xmlnode_text (xaccTransSetDescription, trn, node);
 }
 
 static gboolean

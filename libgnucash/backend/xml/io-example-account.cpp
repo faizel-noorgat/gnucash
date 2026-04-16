@@ -210,7 +210,9 @@ squash_extra_whitespace (char* text)
 static char*
 grab_clean_string (xmlNodePtr tree)
 {
-    return squash_extra_whitespace (g_strstrip (dom_tree_to_text (tree)));
+    auto txt = dom_tree_to_text (tree);
+    auto str = g_strdup (txt ? txt->c_str() : "");
+    return squash_extra_whitespace (g_strstrip (str));
 }
 
 static gboolean

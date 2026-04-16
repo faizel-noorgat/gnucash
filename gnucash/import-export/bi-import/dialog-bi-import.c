@@ -36,6 +36,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 
+#include "gnc-glib-utils.h"
 #include "gnc-date.h"
 #include "gnc-ui.h"
 #include "gnc-ui-util.h"
@@ -170,8 +171,15 @@ gnc_bi_import_read_file (const gchar * filename, const gchar * parser_regexp,
         if ((l > 0) && (line[l - 1] == '\n'))
             line[l - 1] = 0;
 
-        // convert line from locale into utf8
-        line_utf8 = g_locale_to_utf8 (line, -1, NULL, NULL, NULL);
+        // if the line doesn't conform to UTF-8, try a default charcter set
+        // conversion based on locale
+        if (g_utf8_validate(line, -1, NULL))
+            line_utf8 = line;
+        else
+            line_utf8 = g_locale_to_utf8 (line, -1, NULL, NULL, NULL);
+
+        // Remove the potential XML-prohibited codepoints from the UTF-8 compliant string
+        gnc_utf8_strip_invalid(line_utf8);
 
         // parse the line
         match_info = NULL;	// it seems, that in contrast to documentation, match_info is not always set -> g_match_info_free will segfault
@@ -216,9 +224,8 @@ gnc_bi_import_read_file (const gchar * filename, const gchar * parser_regexp,
         }
 
         g_match_info_free (match_info);
-        match_info = 0;
-        g_free (line_utf8);
-        line_utf8 = 0;
+        if (line_utf8 != line)
+            g_free (line_utf8);
     }
     g_free (line);
     line = 0;

@@ -62,6 +62,11 @@ check_imbalance_fraction (const SplitRegister *reg,
         for (auto node = xaccTransGetSplitList (trans); node;
              node = g_list_next (node))
         {
+            auto split{GNC_SPLIT(node->data)};
+
+            if (!(split && xaccTransStillHasSplit (trans, split)))
+                continue;
+
             auto acc = xaccSplitGetAccount (GNC_SPLIT(node->data));
             if (xaccAccountGetCommodity (acc) == imbal_comm &&
                 imbal_mon->value.denom > xaccAccountGetCommoditySCU (acc))
@@ -694,6 +699,10 @@ gnc_find_split_in_trans_by_memo (Transaction *trans, const char *memo,
     for (GList *n = xaccTransGetSplitList (trans); n; n = n->next)
     {
         auto split = GNC_SPLIT(n->data);
+
+        if (!(split && xaccTransStillHasSplit (trans, split)))
+            continue;
+
         if (unit_price)
         {
             gnc_numeric price = xaccSplitGetSharePrice (split);
@@ -927,7 +936,10 @@ gnc_split_register_auto_completion (SplitRegister *reg,
                                          gnc_get_current_book ());
         g_assert (pending_trans == trans);
 
-        gnc_copy_trans_onto_trans (auto_trans, trans, FALSE, FALSE);
+        Account *template_account = xaccAccountLookup (&info->template_account,
+                                                       gnc_get_current_book ());
+
+        gnc_copy_trans_onto_trans (auto_trans, trans, FALSE, template_account, FALSE);
         /* if there is a doclink, let's clear it */
         if (xaccTransGetDocLink (auto_trans) != NULL)
             xaccTransSetDocLink (trans, "");
@@ -945,7 +957,8 @@ gnc_split_register_auto_completion (SplitRegister *reg,
             for (GList *n = xaccTransGetSplitList (trans); n; n = n->next)
             {
                 auto s = GNC_SPLIT(n->data);
-                if (default_account == xaccSplitGetAccount (s))
+                if (s && xaccTransStillHasSplit (trans, s) &&
+                    default_account == xaccSplitGetAccount (s))
                 {
                     blank_split = s;
                     info->blank_split_guid = *xaccSplitGetGUID (blank_split);

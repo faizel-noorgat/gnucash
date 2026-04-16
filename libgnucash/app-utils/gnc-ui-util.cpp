@@ -1031,8 +1031,10 @@ gnc_price_print_info (const gnc_commodity *curr, gboolean use_symbol)
     if (info.commodity)
     {
         int frac = gnc_commodity_get_fraction (curr);
-        guint8 decplaces = 2;
+        guint8 decplaces = 0;
         while (frac != 1 && (frac % 10) == 0 && (frac /= 10)) ++decplaces;
+        if (force)
+            decplaces += 2;
         info.max_decimal_places = decplaces;
         info.min_decimal_places = decplaces;
     }
@@ -1290,8 +1292,7 @@ PrintAmountInternal(char* buf, gnc_numeric val, const GNCPrintAmountInfo *info)
                    info->max_decimal_places, buf, temp_buf);
         }
 
-        if (num_decimal_places > 0)
-            strcat (buf, temp_buf);
+        strcat (buf, temp_buf);
     }
 
     return strlen(buf);

@@ -109,6 +109,7 @@ gnc_plugin_bi_import_init (GncPluginBiImport *plugin)
 static void
 gnc_plugin_bi_import_finalize (GObject *object)
 {
+    G_OBJECT_CLASS (gnc_plugin_bi_import_parent_class)->finalize (object);
 }
 
 /************************************************************

@@ -42,6 +42,7 @@ set(gtest_import_backend_INCLUDE_DIRS
   ${CMAKE_SOURCE_DIR}/libgnucash/engine/mocks
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
+  ${CMAKE_SOURCE_DIR}/borrowed/libc # for strptime.h
 )
 
 set(gtest_import_backend_LIBS
@@ -73,7 +74,13 @@ set(gtest_import_backend_SOURCES
   ${CMAKE_SOURCE_DIR}/libgnucash/engine/gnc-datetime.cpp
   ${CMAKE_SOURCE_DIR}/libgnucash/engine/gnc-timezone.cpp
   ${CMAKE_SOURCE_DIR}/libgnucash/core-utils/gnc-locale-utils.cpp
+  $<$<BOOL:${WIN32}>:${CMAKE_SOURCE_DIR}/libgnucash/engine/qof-win32.cpp>
+  $<$<BOOL:${WIN32}>:${CMAKE_SOURCE_DIR}/borrowed/libc/strptime.c>
 )
+
+if (WIN32)
+  add_definitions(-DOS_WIN32)
+endif()
 
 gnc_add_test(test-import-backend "${gtest_import_backend_SOURCES}"
   gtest_import_backend_INCLUDE_DIRS gtest_import_backend_LIBS)

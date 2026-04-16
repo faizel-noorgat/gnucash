@@ -176,7 +176,8 @@ gnc_add_scheme_targets(scm-engine-2
 gnc_add_scheme_targets(scm-options
   SOURCES options.scm
   OUTPUT_DIR gnucash
-  DEPENDS "scm-engine-2;scm-core-utils;${GUILE_DEPENDS}")
+  DEPENDS "scm-engine-2;scm-core-utils;${GUILE_DEPENDS}"
+  MAKE_LINKS)
 
 add_custom_target(scm-engine ALL DEPENDS scm-options scm-engine-2 scm-engine-1 scm-engine-0)
 

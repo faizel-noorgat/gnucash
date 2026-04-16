@@ -171,40 +171,23 @@ struct account_pdata
     QofBook* book;
 };
 
-static inline gboolean
-set_string (xmlNodePtr node, Account* act,
-            void (*func) (Account* act, const gchar* txt))
-{
-    gchar* txt = dom_tree_to_text (node);
-    g_return_val_if_fail (txt, FALSE);
-
-    func (act, txt);
-
-    g_free (txt);
-
-    return TRUE;
-}
-
 static gboolean
 account_name_handler (xmlNodePtr node, gpointer act_pdata)
 {
     struct account_pdata* pdata = static_cast<decltype (pdata)> (act_pdata);
 
-    return set_string (node, pdata->account, xaccAccountSetName);
+    return apply_xmlnode_text (xaccAccountSetName, pdata->account, node);
 }
 
 static gboolean
 account_id_handler (xmlNodePtr node, gpointer act_pdata)
 {
     struct account_pdata* pdata = static_cast<decltype (pdata)> (act_pdata);
-    GncGUID* guid;
 
-    guid = dom_tree_to_guid (node);
+    auto guid = dom_tree_to_guid (node);
     g_return_val_if_fail (guid, FALSE);
 
-    xaccAccountSetGUID (pdata->account, guid);
-
-    guid_free (guid);
+    xaccAccountSetGUID (pdata->account, &*guid);
 
     return TRUE;
 }
@@ -367,21 +350,17 @@ account_parent_handler (xmlNodePtr node, gpointer act_pdata)
 {
     struct account_pdata* pdata = static_cast<decltype (pdata)> (act_pdata);
     Account* parent;
-    GncGUID* gid;
 
-    gid = dom_tree_to_guid (node);
+    auto gid = dom_tree_to_guid (node);
     g_return_val_if_fail (gid, FALSE);
 
-    parent = xaccAccountLookup (gid, pdata->book);
+    parent = xaccAccountLookup (&*gid, pdata->book);
     if (!parent)
     {
-        guid_free (gid);
         g_return_val_if_fail (parent, FALSE);
     }
 
     gnc_account_append_child (parent, pdata->account);
-
-    guid_free (gid);
 
     return TRUE;
 }
@@ -391,7 +370,7 @@ account_code_handler (xmlNodePtr node, gpointer act_pdata)
 {
     struct account_pdata* pdata = static_cast<decltype (pdata)> (act_pdata);
 
-    return set_string (node, pdata->account, xaccAccountSetCode);
+    return apply_xmlnode_text (xaccAccountSetCode, pdata->account, node);
 }
 
 static gboolean
@@ -399,7 +378,7 @@ account_description_handler (xmlNodePtr node, gpointer act_pdata)
 {
     struct account_pdata* pdata = static_cast<decltype (pdata)> (act_pdata);
 
-    return set_string (node, pdata->account, xaccAccountSetDescription);
+    return apply_xmlnode_text (xaccAccountSetDescription, pdata->account, node);
 }
 
 static gboolean

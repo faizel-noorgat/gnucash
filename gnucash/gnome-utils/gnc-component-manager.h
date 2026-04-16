@@ -163,6 +163,14 @@ gint gnc_register_gui_component (const char *component_class,
  */
 void gnc_gui_component_set_session (gint component_id, gpointer session);
 
+/* gnc_gui_component_reset_session
+ *   Reset the associated session of all components with the original session
+ *
+ * old_session:      the original session 
+ * new_session:      the new session
+ */
+void gnc_gui_component_reset_session (gpointer old_session, gpointer new_session);
+
 /* gnc_gui_component_watch_entity
  *   Add an entity to the list of those being watched by the component.
  *   Only entities with refresh handlers should add watches.

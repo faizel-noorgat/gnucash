@@ -369,7 +369,6 @@ gnc_counter_end_handler (gpointer data_for_children,
                          gpointer parent_data, gpointer global_data,
                          gpointer* result, const gchar* tag)
 {
-    char* strval;
     gint64 val;
     char* type;
     xmlNodePtr tree = (xmlNodePtr)data_for_children;
@@ -392,11 +391,11 @@ gnc_counter_end_handler (gpointer data_for_children,
      * This is invalid xml because the namespace isn't declared in the
      * tag itself. This should be changed to 'type' at some point. */
     type = (char*)xmlGetProp (tree, BAD_CAST "cd:type");
-    strval = dom_tree_to_text (tree);
-    if (!string_to_gint64 (strval, &val))
+    if (!apply_xmlnode_text<bool> ([&val](auto txt){ return string_to_gint64 (txt, &val);}, tree))
     {
+        auto strval = dom_tree_to_text (tree);
         PERR ("string_to_gint64 failed with input: %s",
-              strval ? strval : "(null)");
+              strval ? strval->c_str() : "(null)");
         ret = FALSE;
     }
     else if (g_strcmp0 (type, "transaction") == 0)
@@ -449,7 +448,6 @@ gnc_counter_end_handler (gpointer data_for_children,
         }
     }
 
-    g_free (strval);
     xmlFree (type);
     xmlFreeNode (tree);
     return ret;
@@ -1105,8 +1103,10 @@ write_pricedb (FILE* out, QofBook* book, sixtp_gdv2* gd)
        We do it this way instead of just calling xmlElemDump so that we can
        increment the progress bar as we go. */
 
-    if (fprintf (out, "<%s version=\"%s\">\n", parent->name,
-                 xmlGetProp (parent, BAD_CAST "version")) < 0)
+    auto version_str = xmlGetProp (parent, BAD_CAST "version");
+    auto res = fprintf (out, "<%s version=\"%s\">\n", parent->name, version_str);
+    xmlFree (version_str);
+    if (res < 0)
         return FALSE;
 
     /* We create our own output buffer so we can call xmlNodeDumpOutput to get
@@ -1599,7 +1599,7 @@ gnc_book_write_to_xml_file_v2 (QofBook* book, const char* filename,
 {
     bool success = true;
 
-    auto [file, thread] = try_gz_open (filename, "w", compress, TRUE);
+    auto [file, thread] = try_gz_open (filename, "wb", compress, TRUE);
     if (!file)
         return false;
 
@@ -1633,7 +1633,7 @@ gnc_book_write_accounts_to_xml_file_v2 (QofBackend* qof_be, QofBook* book,
     FILE* out;
     gboolean success = TRUE;
 
-    out = g_fopen (filename, "w");
+    out = g_fopen (filename, "wb");
 
     /* Try to write as much as possible */
     if (!out

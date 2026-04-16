@@ -201,7 +201,7 @@ qof_object_foreach (QofIdTypeConst type_name, QofBook *book,
         return;
     }
     col = qof_book_get_collection (book, obj->e_type);
-    if (!obj)
+    if (!col)
     {
         return;
     }

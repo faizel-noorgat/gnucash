@@ -429,6 +429,7 @@ gnc_search_param_prepend_internal (GList *list, char const *title,
     /* put the path into the right order, and set it */
     path = g_slist_reverse (path);
     gnc_search_param_set_param_path (p, search_type, path);
+    g_slist_free (path);
 
     /* Maybe over-ride the type */
     if (type_override)

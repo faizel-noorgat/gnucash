@@ -147,7 +147,6 @@ gnucash/gnome-utils/dialog-userpass.c
 gnucash/gnome-utils/dialog-utils.c
 gnucash/gnome-utils/gnc-account-sel.c
 gnucash/gnome-utils/gnc-amount-edit.c
-gnucash/gnome-utils/gnc-autoclear.c
 gnucash/gnome-utils/gnc-autosave.c
 gnucash/gnome-utils/gnc-cell-renderer-text-flag.c
 gnucash/gnome-utils/gnc-cell-renderer-text-view.c
@@ -291,11 +290,11 @@ gnucash/gtkbuilder/gnc-recurrence.glade
 gnucash/gtkbuilder/gnc-tree-view-owner.glade
 gnucash/gtkbuilder/window-autoclear.glade
 gnucash/gtkbuilder/window-reconcile.glade
-gnucash/html/gnc-html.c
-gnucash/html/gnc-html-factory.c
-gnucash/html/gnc-html-history.c
-gnucash/html/gnc-html-webkit1.c
-gnucash/html/gnc-html-webkit2.c
+gnucash/html/gnc-html.cpp
+gnucash/html/gnc-html-factory.cpp
+gnucash/html/gnc-html-history.cpp
+gnucash/html/gnc-html-webkit1.cpp
+gnucash/html/gnc-html-webkit2.cpp
 gnucash/html/html.scm
 gnucash/import-export/aqb/assistant-ab-initial.c
 gnucash/import-export/aqb/assistant-ab-initial.glade
@@ -536,6 +535,7 @@ libgnucash/app-utils/file-utils.c
 libgnucash/app-utils/gfec.c
 libgnucash/app-utils/gnc-account-merge.c
 libgnucash/app-utils/gnc-addr-quickfill.c
+libgnucash/app-utils/gnc-autoclear.cpp
 libgnucash/app-utils/gnc-entry-quickfill.c
 libgnucash/app-utils/gnc-exp-parser.c
 libgnucash/app-utils/gnc-gsettings.cpp
@@ -619,7 +619,8 @@ libgnucash/core-utils/gnc-glib-utils.c
 libgnucash/core-utils/gnc-locale-utils.c
 libgnucash/core-utils/gnc-locale-utils.cpp
 libgnucash/core-utils/gnc-path.c
-libgnucash/core-utils/gnc-prefs.c
+libgnucash/core-utils/gnc-prefs.cpp
+libgnucash/core-utils/gnc-unicode.cpp
 libgnucash/core-utils/gnc-version.c
 libgnucash/engine/Account.cpp
 libgnucash/engine/cap-gains.cpp
