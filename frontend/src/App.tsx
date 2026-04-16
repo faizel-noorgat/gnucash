@@ -10,10 +10,15 @@ import { RegisterPage } from '@/routes/RegisterPage';
 import { DashboardPage } from '@/routes/DashboardPage';
 import { NotFoundPage } from '@/routes/NotFoundPage';
 import { AccountListPage } from '@/routes/AccountListPage';
+import { AccountRegisterPage } from '@/routes/AccountRegisterPage';
 import { ReportsIndex } from '@/routes/reports';
 import { BalanceSheetPage } from '@/routes/reports/balance-sheet';
 import { IncomeStatementPage } from '@/routes/reports/income-statement';
 import { CashFlowPage } from '@/routes/reports/cash-flow';
+
+import { TransactionListPage } from '@/routes/TransactionListPage';
+import { TransactionNewPage } from '@/routes/TransactionNewPage';
+import { TransactionDetailPage } from '@/routes/TransactionDetailPage';
 
 function PlaceholderPage({ title }: { title: string }) {
   return <div><h1 className="text-2xl font-bold">{title}</h1><p className="mt-2 text-muted-foreground">Coming soon.</p></div>;
@@ -32,7 +37,10 @@ export function App() {
             <Route element={<RootLayout />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/accounts" element={<AccountListPage />} />
-              <Route path="/transactions" element={<PlaceholderPage title="Transactions" />} />
+              <Route path="/accounts/:id" element={<AccountRegisterPage />} />
+              <Route path="/transactions" element={<TransactionListPage />} />
+              <Route path="/transactions/new" element={<TransactionNewPage />} />
+              <Route path="/transactions/:id" element={<TransactionDetailPage />} />
               <Route path="/budgets" element={<PlaceholderPage title="Budgets" />} />
               <Route path="/investments" element={<PlaceholderPage title="Investments" />} />
               <Route path="/receipts" element={<PlaceholderPage title="Receipts" />} />
