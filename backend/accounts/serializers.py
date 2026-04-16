@@ -64,3 +64,22 @@ class CommoditySerializer(serializers.ModelSerializer):
         model = Commodity
         fields = ('id', 'namespace', 'mnemonic', 'fullname', 'cusip', 'fraction')
         read_only_fields = ('id',)
+
+
+class AccountRegisterEntrySerializer(serializers.Serializer):
+    """Single row in the account register — a split with transaction context."""
+    id = serializers.UUIDField()
+    post_date = serializers.DateField()
+    description = serializers.CharField()
+    num = serializers.CharField()
+    split_value = serializers.DecimalField(max_digits=20, decimal_places=10)
+    split_memo = serializers.CharField()
+    other_accounts = serializers.ListField(child=serializers.CharField())
+    reconcile_state = serializers.CharField()
+    created_at = serializers.DateTimeField()
+
+
+class AccountRegisterResponseSerializer(serializers.Serializer):
+    """Full register response for an account."""
+    account = AccountSerializer()
+    transactions = AccountRegisterEntrySerializer(many=True)
