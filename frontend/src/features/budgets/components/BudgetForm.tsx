@@ -18,7 +18,7 @@ type BudgetFormValues = z.infer<typeof budgetSchema>;
 
 export function BudgetForm({ onSuccess, onCancel }: { onSuccess?: () => void; onCancel?: () => void }) {
   const form = useForm<BudgetFormValues>({ resolver: zodResolver(budgetSchema), defaultValues: { style: 'TRADITIONAL', rollover: false } });
-  const onSubmit = (data: BudgetFormValues) => { onSuccess?.(); };
+  const onSubmit = () => { onSuccess?.(); };
 
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>

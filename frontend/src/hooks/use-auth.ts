@@ -7,6 +7,7 @@ export function useAuth() {
   const login = useAuthStore((s) => s.login);
   const logout = useAuthStore((s) => s.logout);
   const setTenantId = useAuthStore((s) => s.setTenantId);
+  const setLoading = useAuthStore((s) => s.setLoading);
 
   return {
     user,
@@ -16,5 +17,6 @@ export function useAuth() {
     login,
     logout,
     setTenantId,
+    setLoading,
   };
 }

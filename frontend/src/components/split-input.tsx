@@ -1,5 +1,4 @@
 // frontend/src/components/split-input.tsx
-import * as React from 'react';
 import { Plus, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { cn } from '@/lib/utils';
@@ -78,14 +77,14 @@ export function SplitInput({ fieldName = 'splits_data', maxSplits = 20 }: SplitI
                     placeholder="Choose account..."
                     aria-label={`Account for split ${index + 1}`}
                   />
-                  {form.formState.errors.splits_data?.[index]?.account && (
-                    <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.splits_data[index].account?.message)}</p>
+                  {(form.formState.errors.splits_data as any)?.[index]?.account && (
+                    <p className="mt-1 text-xs text-red-600">{String((form.formState.errors.splits_data as any)[index]?.account?.message)}</p>
                   )}
                 </TableCell>
                 <TableCell>
                   <Input type="number" step="0.01" placeholder="0.00" value={field.value ?? ''} onChange={(e) => { form.setValue(`${fieldName}.${index}.value`, e.target.value, { shouldDirty: true, shouldValidate: true }); }} aria-label={`Value for split ${index + 1}`} />
-                  {form.formState.errors.splits_data?.[index]?.value && (
-                    <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.splits_data[index].value?.message)}</p>
+                  {(form.formState.errors.splits_data as any)?.[index]?.value && (
+                    <p className="mt-1 text-xs text-red-600">{String((form.formState.errors.splits_data as any)[index]?.value?.message)}</p>
                   )}
                 </TableCell>
                 <TableCell>

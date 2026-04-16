@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
