@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'django_filters',
-    'multitenant',
+    'django_multitenant',
     # Local apps
     'tenants',
     'accounts',

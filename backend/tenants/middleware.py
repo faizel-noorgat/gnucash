@@ -10,17 +10,16 @@ class TenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if hasattr(request, 'user') and request.user and request.user.is_authenticated:
-            tenant_id = request.headers.get('X-Tenant-ID')
-            if tenant_id:
-                try:
-                    membership = TenantMembership.objects.select_related('tenant').get(
-                        tenant_id=tenant_id, user=request.user
-                    )
-                    request.tenant = membership.tenant
-                    connection.cursor().execute(
-                        "SET app.current_tenant = %s", [str(tenant_id)]
-                    )
-                except TenantMembership.DoesNotExist:
-                    pass
+        tenant_id = request.headers.get('X-Tenant-ID')
+        if tenant_id:
+            try:
+                from tenants.models import Tenant
+
+                tenant = Tenant.objects.get(id=tenant_id)
+                request.tenant = tenant
+                connection.cursor().execute(
+                    "SET app.current_tenant = %s", [str(tenant_id)]
+                )
+            except Exception:
+                pass
         return self.get_response(request)
