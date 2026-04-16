@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [stable]
+  pull_request:
+    branches: [stable]
+
+jobs:
+  backend-lint:
+    name: Backend Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install ruff
+        run: pip install ruff
+      - name: Lint with ruff
+        run: ruff check backend/
+      - name: Check formatting with ruff
+        run: ruff format --check backend/
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: [backend-lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r backend/requirements/dev.txt
+      - name: Run pytest with coverage
+        run: cd backend && pytest tests/ -v --tb=short --cov=. --cov-report=term-missing --cov-fail-under=80
+
+  backend-typecheck:
+    name: Backend Type Check
+    runs-on: ubuntu-latest
+    needs: [backend-lint]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install mypy
+        run: pip install mypy
+      - name: Run mypy
+        run: cd backend && mypy . --ignore-missing-imports
+
+  frontend-typecheck:
+    name: Frontend Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: cd frontend && npm ci
+      - name: Type check
+        run: cd frontend && npx tsc --noEmit
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    needs: [frontend-typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: cd frontend && npm ci
+      - name: Build
+        run: cd frontend && npm run build
+
+  admin-typecheck:
+    name: Admin Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: cd admin && npm ci
+      - name: Type check
+        run: cd admin && npx tsc --noEmit
+
+  admin-build:
+    name: Admin Build
+    runs-on: ubuntu-latest
+    needs: [admin-typecheck]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        run: cd admin && npm ci
+      - name: Build
+        run: cd admin && npm run build
