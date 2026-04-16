@@ -20,6 +20,12 @@ import { TransactionListPage } from '@/routes/TransactionListPage';
 import { TransactionNewPage } from '@/routes/TransactionNewPage';
 import { TransactionDetailPage } from '@/routes/TransactionDetailPage';
 
+import { ReceiptListPage } from '@/routes/ReceiptListPage';
+import { ReceiptUploadPage } from '@/routes/ReceiptUploadPage';
+import { ReceiptDetailPage } from '@/routes/ReceiptDetailPage';
+import { RecurringListPage } from '@/routes/RecurringListPage';
+import { RecurringNewPage } from '@/routes/RecurringNewPage';
+
 function PlaceholderPage({ title }: { title: string }) {
   return <div><h1 className="text-2xl font-bold">{title}</h1><p className="mt-2 text-muted-foreground">Coming soon.</p></div>;
 }
@@ -43,8 +49,11 @@ export function App() {
               <Route path="/transactions/:id" element={<TransactionDetailPage />} />
               <Route path="/budgets" element={<PlaceholderPage title="Budgets" />} />
               <Route path="/investments" element={<PlaceholderPage title="Investments" />} />
-              <Route path="/receipts" element={<PlaceholderPage title="Receipts" />} />
-              <Route path="/recurring" element={<PlaceholderPage title="Recurring" />} />
+              <Route path="/receipts" element={<ReceiptListPage />} />
+              <Route path="/receipts/upload" element={<ReceiptUploadPage />} />
+              <Route path="/receipts/:id" element={<ReceiptDetailPage />} />
+              <Route path="/recurring" element={<RecurringListPage />} />
+              <Route path="/recurring/new" element={<RecurringNewPage />} />
               <Route path="/reports" element={<ReportsIndex />} />
               <Route path="/reports/balance-sheet" element={<BalanceSheetPage />} />
               <Route path="/reports/income-statement" element={<IncomeStatementPage />} />
