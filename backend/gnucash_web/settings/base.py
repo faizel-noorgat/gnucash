@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'reconciliation',
     'notifications',
     'audit',
+    'imports',
     'billing',
 ]
 

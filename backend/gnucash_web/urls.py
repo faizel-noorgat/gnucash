@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/v1/', include('tenants.urls')),
     path('api/v1/', include(tenant_router.urls)),
     path('api/v1/', include('billing.urls')),
+    path('api/v1/', include('imports.urls')),
     path('api/v1/', include('reconciliation.urls')),
     path('api/v1/admin/', include(admin_api_router.urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
