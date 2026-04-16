@@ -2,6 +2,7 @@ import { CalendarIcon, Loader2 } from 'lucide-react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { format } from 'date-fns';
+import { useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -11,17 +12,23 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Separator } from '@/components/ui/separator';
 import { SplitInput } from '@/components/split-input';
-import { useCreateTransaction } from '@/hooks/use-transactions';
+import { useCreateTransaction, useUpdateTransaction, useTransaction } from '@/hooks/use-transactions';
 import { transactionFormSchema, type TransactionFormValues } from './transaction-form-schema';
 
 export interface TransactionFormProps {
+  transactionId?: string;
   onSuccess?: () => void;
   onCancel?: () => void;
   defaultCurrency?: string;
 }
 
-export function TransactionForm({ onSuccess, onCancel, defaultCurrency = 'USD' }: TransactionFormProps) {
+export function TransactionForm({ transactionId, onSuccess, onCancel, defaultCurrency = 'USD' }: TransactionFormProps) {
+  const isEdit = !!transactionId;
   const createMutation = useCreateTransaction();
+  const updateMutation = useUpdateTransaction();
+  const { data: existing, isLoading: isLoadingTx } = useTransaction(transactionId ?? '');
+  const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     defaultValues: {
@@ -36,15 +43,52 @@ export function TransactionForm({ onSuccess, onCancel, defaultCurrency = 'USD' }
     },
   });
 
+  useEffect(() => {
+    if (existing && isEdit) {
+      form.reset({
+        currency: existing.currency,
+        post_date: existing.post_date,
+        description: existing.description,
+        notes: existing.notes ?? '',
+        splits_data: existing.splits.map((s) => ({
+          account: s.account,
+          value: s.value,
+          quantity: s.quantity,
+          memo: s.memo,
+        })),
+      });
+    }
+  }, [existing, isEdit, form]);
+
   const onSubmit = (data: TransactionFormValues) => {
-    createMutation.mutate(data, { onSuccess: () => { form.reset(); onSuccess?.(); } });
+    if (isEdit) {
+      updateMutation.mutate({ id: transactionId!, ...data }, { onSuccess });
+    } else {
+      createMutation.mutate(data, {
+        onSuccess: () => {
+          form.reset();
+          onSuccess?.();
+        },
+      });
+    }
   };
+
+  if (isEdit && isLoadingTx) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center py-12">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          <span className="text-sm text-muted-foreground">Loading transaction…</span>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <Card>
-          <CardHeader><CardTitle>New Transaction</CardTitle></CardHeader>
+          <CardHeader><CardTitle>{isEdit ? 'Edit Transaction' : 'New Transaction'}</CardTitle></CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-2">
@@ -75,7 +119,7 @@ export function TransactionForm({ onSuccess, onCancel, defaultCurrency = 'USD' }
             </div>
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (optional)</Label>
-              <Input id="notes" {...form.register('notes')} placeholder="Additional details..." />
+              <Input id="notes" {...form.register('notes')} placeholder="Additional details…" />
             </div>
             <Separator />
             <SplitInput />
@@ -84,11 +128,12 @@ export function TransactionForm({ onSuccess, onCancel, defaultCurrency = 'USD' }
             )}
           </CardContent>
           <CardFooter className="flex justify-between gap-4">
-            {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={createMutation.isPending}>Cancel</Button>}
+            {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>}
             <div className="ml-auto flex items-center gap-4">
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Transaction
+              {form.formState.isDirty && <span className="text-xs text-muted-foreground">Unsaved changes</span>}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEdit ? 'Update Transaction' : 'Create Transaction'}
               </Button>
             </div>
           </CardFooter>

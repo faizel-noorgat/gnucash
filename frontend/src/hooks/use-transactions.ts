@@ -33,6 +33,18 @@ export function useCreateTransaction() {
   });
 }
 
+export function useUpdateTransaction() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, ...data }: { id: string; currency: string; post_date: string; description: string; notes?: string; splits_data: { account: string; value: string; quantity?: string; memo?: string }[] }) =>
+      api.put<Transaction>(`/transactions/${id}`, data),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: txKeys.all });
+      qc.invalidateQueries({ queryKey: txKeys.detail(variables.id) });
+    },
+  });
+}
+
 export function useDeleteTransaction() {
   const qc = useQueryClient();
   return useMutation({
