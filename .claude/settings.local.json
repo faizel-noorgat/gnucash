@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Faizel.Noorgat/.claude/**)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(find backend/ -type f -name \"*.py\" -exec grep -l \"class.*Model\" {} \\\\;)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\Faizel.Noorgat\\.claude\\projects\\C--Users-Faizel-Noorgat-Documents-Projects-gnucash\\memory"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "context7"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": ".claude/hooks/run-hook.cmd session-start",
+            "async": false
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Read the memory index at ~/.claude/projects/C--Users-Faizel-Noorgat-Documents-Projects-gnucash/memory/MEMORY.md to load any saved session context. Also read CLAUDE.md for project-specific instructions."
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Before ending this session, summarize any important context that should be remembered: decisions made, files modified, key learnings. Ask the user if they want to save this to memory with '/session-close'."
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
+  }
+}

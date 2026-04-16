@@ -1,0 +1,20 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "expert-skill-writer-marketplace",
+  "version": "1.0.0",
+  "description": "A skill that teaches Claude how to write production-quality skills",
+  "owner": {
+    "name": "arch1904"
+  },
+  "plugins": [
+    {
+      "name": "expert-skill-writer",
+      "description": "Write, review, and improve Claude skills following Anthropic's official guide. Use when creating SKILL.md files, designing skill folders, crafting frontmatter, or getting guidance on skill architecture and best practices.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/expert-skill-writer"],
+      "version": "1.0.0",
+      "category": "development"
+    }
+  ]
+}

@@ -43,3 +43,19 @@ def authenticated_client(api_client, user, tenant, membership):
         HTTP_X_TENANT_ID=str(tenant.id),
     )
     return api_client
+
+
+@pytest.fixture
+def other_tenant(db):
+    return baker.make('tenants.Tenant', name='Other Tenant', slug='other-tenant')
+
+
+@pytest.fixture
+def commodity(db):
+    return baker.make(
+        'accounts.Commodity',
+        namespace='NASDAQ',
+        mnemonic='USD',
+        fullname='US Dollar',
+        fraction=100,
+    )

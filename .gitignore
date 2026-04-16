@@ -194,3 +194,21 @@ messages.mo
 /.settings/
 /build/
 *.LCK
+
+# GnuCash Web
+backend/.env
+backend/.env.*
+!backend/.env.example
+backend/*.egg-info
+backend/__pycache__/
+backend/*/__pycache__/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+admin/.env
+admin/.env.*
+!admin/.env.example
+admin/dist/
+admin/node_modules/
+frontend/dist/
+frontend/node_modules/
