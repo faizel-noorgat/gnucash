@@ -1,0 +1,14 @@
+Django>=5.0,<6.0
+djangorestframework>=3.15,<4.0
+django-filter>=24,<25
+django-environ>=0.11,<0.12
+django-cors-headers>=4.3,<5
+django-multitenant>=3.4
+celery[redis]>=5.3,<6.0
+redis>=5.0,<6
+psycopg2-binary>=2.9,<3
+djangorestframework-simplejwt>=5.3,<6
+django-allauth[socialaccount]>=65,<66
+argon2-cffi>=23,<24
+Pillow>=10,<11
+stripe>=11,<12
