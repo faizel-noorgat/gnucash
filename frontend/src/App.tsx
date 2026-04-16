@@ -9,6 +9,7 @@ import { LoginPage } from '@/routes/LoginPage';
 import { RegisterPage } from '@/routes/RegisterPage';
 import { DashboardPage } from '@/routes/DashboardPage';
 import { NotFoundPage } from '@/routes/NotFoundPage';
+import { AccountListPage } from '@/routes/AccountListPage';
 
 function PlaceholderPage({ title }: { title: string }) {
   return <div><h1 className="text-2xl font-bold">{title}</h1><p className="mt-2 text-muted-foreground">Coming soon.</p></div>;
@@ -26,7 +27,7 @@ export function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<RootLayout />}>
               <Route path="/" element={<DashboardPage />} />
-              <Route path="/accounts" element={<PlaceholderPage title="Accounts" />} />
+              <Route path="/accounts" element={<AccountListPage />} />
               <Route path="/transactions" element={<PlaceholderPage title="Transactions" />} />
               <Route path="/budgets" element={<PlaceholderPage title="Budgets" />} />
               <Route path="/investments" element={<PlaceholderPage title="Investments" />} />
