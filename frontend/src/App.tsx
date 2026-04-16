@@ -26,6 +26,12 @@ import { ReceiptDetailPage } from '@/routes/ReceiptDetailPage';
 import { RecurringListPage } from '@/routes/RecurringListPage';
 import { RecurringNewPage } from '@/routes/RecurringNewPage';
 
+import { SettingsPage } from '@/routes/SettingsPage';
+import { UsersPage } from '@/routes/UsersPage';
+import { AuditLogPage } from '@/routes/AuditLogPage';
+import { InvestmentListPage } from '@/routes/InvestmentListPage';
+import { InvestmentDetailPage } from '@/routes/InvestmentDetailPage';
+
 function PlaceholderPage({ title }: { title: string }) {
   return <div><h1 className="text-2xl font-bold">{title}</h1><p className="mt-2 text-muted-foreground">Coming soon.</p></div>;
 }
@@ -48,7 +54,8 @@ export function App() {
               <Route path="/transactions/new" element={<TransactionNewPage />} />
               <Route path="/transactions/:id" element={<TransactionDetailPage />} />
               <Route path="/budgets" element={<PlaceholderPage title="Budgets" />} />
-              <Route path="/investments" element={<PlaceholderPage title="Investments" />} />
+              <Route path="/investments" element={<InvestmentListPage />} />
+              <Route path="/investments/:id" element={<InvestmentDetailPage />} />
               <Route path="/receipts" element={<ReceiptListPage />} />
               <Route path="/receipts/upload" element={<ReceiptUploadPage />} />
               <Route path="/receipts/:id" element={<ReceiptDetailPage />} />
@@ -58,7 +65,9 @@ export function App() {
               <Route path="/reports/balance-sheet" element={<BalanceSheetPage />} />
               <Route path="/reports/income-statement" element={<IncomeStatementPage />} />
               <Route path="/reports/cash-flow" element={<CashFlowPage />} />
-              <Route path="/settings" element={<PlaceholderPage title="Settings" />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/settings/users" element={<UsersPage />} />
+              <Route path="/settings/audit-log" element={<AuditLogPage />} />
             </Route>
           </Route>
           <Route path="*" element={<NotFoundPage />} />
