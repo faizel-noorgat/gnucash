@@ -31,8 +31,7 @@ tenant_router.register('audit-log', AuditLogViewSet, basename='auditlog')
 tenant_router.register('notifications', NotificationViewSet, basename='notification')
 tenant_router.register('notifications/preferences', NotificationPreferenceViewSet, basename='notification-preference')
 
-# Admin API routes
-admin_api_router = DefaultRouter()
+from admin_api.urls import urlpatterns as admin_api_urls
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -47,6 +46,6 @@ urlpatterns = [
     path('api/v1/', include('billing.urls')),
     path('api/v1/', include('imports.urls')),
     path('api/v1/', include('reconciliation.urls')),
-    path('api/v1/admin/', include(admin_api_router.urls)),
+    path('api/v1/admin/', include(admin_api_urls)),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]

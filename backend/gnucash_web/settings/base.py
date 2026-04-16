@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'audit',
     'imports',
     'billing',
+    'admin_api',
 ]
 
 MIDDLEWARE = [
