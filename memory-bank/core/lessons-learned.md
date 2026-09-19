@@ -212,3 +212,13 @@ Format:
 **Symptom:** A passing test broke when `document_extractions` gained a real FK to `tenants`. Its parent, `Document`, stores its tenant as a bare `UUIDField`, so documents can exist against tenant ids that are not rows in `tenants`. The child's stricter FK therefore rejected extractions for documents the database had already accepted — an inconsistency introduced in the name of safety, making some parent rows impossible to attach anything to.
 
 **Fix:** A derived column takes the **shape** of the column it is derived from: a foreign key where the parent has one, a bare value where it does not. Enforce the invariant that actually matters — that the child agrees with its parent — with a composite key `(parent_id, derived) → parent(pk, derived)`, which is exactly as strong as the parent is and no stronger. If the parent's looseness is itself wrong, fix the parent deliberately and in its own change; do not smuggle the fix in through the child.
+
+---
+
+## LL-021 — Grep the template, not the rendered value
+
+**Trigger:** Verifying that generated output (SQL, config, code) contains some specific value, by searching the source for that value as a literal.
+
+**Symptom:** `grep 'TO app_user'` across commit `290cc7e73e` returned **zero** matches, which reads as "the policies were never re-principled and are still `TO PUBLIC`". They were not: `common/rls/migrations/0004_tenant_isolation_closure.py` emits every policy as `TO {APP_ROLE}` from `APP_ROLE = "app_user"`, so the role name is only ever assembled at migration-run time. The grep was answering a different question than the one asked, and its confident zero was indistinguishable from a real absence.
+
+**Fix:** When a search for an expected literal finds nothing, establish whether the value is composed before concluding it is missing — grep the template (`{APP_ROLE}`, `f"..."` interpolations, constants, config lookups) or grep the *effect* (the migration's output, `pg_policies` after a migrate). The same rule covers the inverse: a literal present in source proves only that someone typed it, not that anything runs it (LL-018). Absence of a string is evidence about the string, never about the behaviour.
