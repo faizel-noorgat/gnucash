@@ -5,6 +5,8 @@ from django.db import models
 from decimal import Decimal
 import uuid
 
+from common.rls.models import TenantDerivedChildModel
+
 
 class DiscountOrderingMode(models.IntegerChoices):
     """
@@ -20,12 +22,25 @@ class DiscountOrderingMode(models.IntegerChoices):
     POSTTAX = 3, 'Post-Tax'
 
 
-class DocumentLine(models.Model):
+class DocumentLine(TenantDerivedChildModel):
     """
     Line item in an accounting document.
 
     Contains quantity, unit price, tax, account mapping, and discount logic.
+
+    Tenancy is inherited from the owning document - see
+    ``TenantDerivedChildModel``.
     """
+
+    #: Tenancy is inherited from the owning document, and takes the same shape
+    #: the document's does - a real FK to ``Tenant``.
+    tenant = models.ForeignKey(
+        'identity.Tenant',
+        on_delete=models.CASCADE,
+        related_name='%(class)s_set',
+        db_index=True,
+    )
+    tenant_parent_field = 'document'
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     document = models.ForeignKey(
         'AccountingDocument',

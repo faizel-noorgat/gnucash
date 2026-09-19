@@ -15,6 +15,8 @@ from typing import Any
 
 from django.db import models
 
+from common.rls.models import TenantDerivedChildModel
+
 
 class ExtractionStatus(models.TextChoices):
     """Lifecycle of a single extraction attempt."""
@@ -53,8 +55,11 @@ class ExtractionVersion(models.Model):
         return self.current_version
 
 
-class DocumentExtraction(models.Model):
+class DocumentExtraction(TenantDerivedChildModel):
     """Single OCR / AI extraction attempt on a document.
+
+    Tenancy is inherited from the owning document - see
+    ``TenantDerivedChildModel``.
 
     Immutability contract (BR-DI-003 / BR-DI-009):
         Once a row exists, only the following fields may transition:
@@ -67,6 +72,13 @@ class DocumentExtraction(models.Model):
         ai_suggestion, confidence_score, confidence_evidence) are immutable
         after creation. Corrections must create a NEW row with version+1.
     """
+
+    #: Tenancy is inherited from the owning document. ``Document`` keeps its
+    #: tenant as a bare ``UUIDField`` rather than a foreign key, so this does
+    #: too: a child typed more strictly than its parent would make documents
+    #: that exist impossible to attach an extraction to.
+    tenant_id = models.UUIDField(db_index=True)
+    tenant_parent_field = "document"
 
     # --- Identity -----------------------------------------------------------
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

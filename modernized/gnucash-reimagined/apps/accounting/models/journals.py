@@ -42,6 +42,8 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.utils import timezone
 
+from common.rls.models import TenantDerivedChildModel
+
 
 class JournalEntryStatus(models.TextChoices):
     """
@@ -529,7 +531,7 @@ class ImmutablePostedJournalEntry(models.Model):
         raise ValidationError("Cannot delete immutable posted journal entry.")
 
 
-class JournalLine(models.Model):
+class JournalLine(TenantDerivedChildModel):
     """
     Journal line (split) - individual debit/credit entry.
 
@@ -646,6 +648,18 @@ class JournalLine(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    #: Tenancy is inherited from the owning entry. Ledger lines carry the
+    #: financial payload, so they are policed by a plain equality on their own
+    #: ``tenant_id`` rather than an EXISTS against the parent - see
+    #: ``TenantDerivedChildModel`` for why both halves exist.
+    tenant = models.ForeignKey(
+        "identity.Tenant",
+        on_delete=models.CASCADE,
+        related_name="%(class)s_set",
+        db_index=True,
+    )
+    tenant_parent_field = "journal_entry"
+
     class Meta:
         app_label = "accounting"
         indexes = [
@@ -673,7 +687,14 @@ class JournalLine(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        """Save with validation."""
+        """Save with validation.
+
+        The tenant is derived *before* ``full_clean()`` rather than left to
+        ``TenantDerivedChildModel.save()`` further down the MRO: ``full_clean``
+        validates that the non-nullable ``tenant`` FK is populated, so deriving
+        it any later would fail validation on every insert.
+        """
+        self.derive_tenant_id()
         self.full_clean()
         super().save(*args, **kwargs)
 

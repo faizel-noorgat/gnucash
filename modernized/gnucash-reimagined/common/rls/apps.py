@@ -18,3 +18,9 @@ class RlsConfig(AppConfig):
     label = "rls"
     verbose_name = "Row Level Security"
     default_auto_field = "django.db.models.BigAutoField"
+
+    def ready(self):
+        # Importing registers the checks as a side effect. Deferred to ready()
+        # because the module reads settings, and because a check that runs at
+        # import time could fire before the app registry is populated.
+        from common.rls import checks  # noqa: F401

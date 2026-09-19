@@ -5,13 +5,26 @@ from django.db import models
 from django.conf import settings
 import uuid
 
+from common.rls.models import TenantDerivedChildModel
 
-class DocumentAttachment(models.Model):
+
+class DocumentAttachment(TenantDerivedChildModel):
     """
     Attachment linked to an accounting document.
 
-    Stored in object storage (S3-compatible).
+    Stored in object storage (S3-compatible). Tenancy is inherited from the
+    owning document - see ``TenantDerivedChildModel``.
     """
+
+    #: Tenancy is inherited from the owning document, and takes the same shape
+    #: the document's does - a real FK to ``Tenant``.
+    tenant = models.ForeignKey(
+        'identity.Tenant',
+        on_delete=models.CASCADE,
+        related_name='%(class)s_set',
+        db_index=True,
+    )
+    tenant_parent_field = 'document'
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     document = models.ForeignKey(
         'AccountingDocument',

@@ -12,6 +12,8 @@ import uuid
 from django.db import models
 from django.utils import timezone
 
+from common.rls.models import TenantDerivedChildModel
+
 
 class MatchKind(models.TextChoices):
     """What the document has been matched to."""
@@ -31,8 +33,20 @@ class MatchStatus(models.TextChoices):
     SUPERSEDED = "superseded", "Superseded by a later match"
 
 
-class DocumentMatch(models.Model):
-    """A candidate match between a document and an external entity."""
+class DocumentMatch(TenantDerivedChildModel):
+    """A candidate match between a document and an external entity.
+
+    Tenancy is inherited from the owning document - see
+    ``TenantDerivedChildModel``.
+    """
+
+    #: Tenancy is inherited from the owning document, as a bare ``UUIDField``
+    #: to match the shape ``Document`` uses.
+    tenant_id = models.UUIDField(db_index=True)
+
+    #: The match's polymorphic targets are plain UUIDs with no foreign key, so
+    #: ``document`` is the only parent that can supply a tenancy.
+    tenant_parent_field = "document"
 
     guid = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     document = models.ForeignKey(

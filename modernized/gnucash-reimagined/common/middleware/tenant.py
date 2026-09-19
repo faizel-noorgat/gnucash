@@ -12,11 +12,16 @@ COMMIT or ROLLBACK and cannot leak between requests that share a pool slot.
 
 Three entry points, for the three call sites:
 
-* ``TenantContextMiddleware`` - HTTP requests, extracts the tenant from the
-  request and sets context for the duration of the request.
+* ``TenantContextMiddleware`` - HTTP requests. Resolves the requested tenant,
+  puts it to the authorization decision, and only then establishes context for
+  the duration of the request. The only entry point that authorises.
 * ``TenantContext``            - application code holding model instances,
   e.g. ``with TenantContext(tenant, user):``
 * ``TenantContextManager``     - background tasks, which have only ids.
+
+The last two establish context for a tenant the caller has already decided on
+by other means. They perform no authorization check of their own, and must not
+be reached from request handling with a caller-supplied tenant.
 
 Read-back helpers ``get_current_tenant_id`` / ``get_current_user_id`` return
 what the database session currently holds.
@@ -25,14 +30,36 @@ NOTE: SET LOCAL only survives inside an open transaction. Under Django's
 default autocommit, a statement issued outside an explicit transaction is
 committed immediately and the setting is discarded. Callers setting context
 for a unit of work must therefore be inside ``transaction.atomic()``.
+``TenantContextMiddleware`` opens that transaction itself - see below.
+
+Establishing context is not the same as authorising it
+------------------------------------------------------
+Two different questions, answered in two different places, and conflating them
+is how a tenant isolation boundary turns into decoration:
+
+* *Which tenant may this caller assume?* -
+  ``AuthorizationService.can_access_tenant()``. Business authorization, backed
+  by memberships and advisor grants.
+* *What does the database do with whatever tenant is in context?* - RLS. It
+  confines the session to that one tenant and nothing more.
+
+RLS cannot answer the first question. A session whose context is set to tenant
+B reads tenant B's data perfectly happily; the policies are doing their job.
+So the HTTP path must run the authorization decision *before* the context is
+established, and refuse the request if it fails. Only
+``TenantContextMiddleware`` does that. ``TenantContext`` and
+``TenantContextManager`` deliberately do not: they are the internal entry
+points for code that has already established a tenant by business means, and
+``TenantScopedTask`` is the trusted background equivalent.
 """
 
 from contextlib import contextmanager
 
 from django.conf import settings
-from django.db import connection
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import connection, transaction
 from django.http import HttpRequest, HttpResponse
-from django.utils.deprecation import MiddlewareMixin
+from django.utils.module_loading import import_module
 
 # Session variable names read by the RLS policies. These names are part of the
 # database contract - common/rls/, and docker/init-db.sql's get_current_tenant_id()
@@ -42,9 +69,45 @@ USER_CONTEXT_VARIABLE = "app.current_user_id"
 ENTITY_CONTEXT_VARIABLE = "app.current_entity_id"
 
 
+#: The one authoritative answer to "may this user assume this tenant?".
+#: Configurable so `common` does not have to import a bounded context, and so
+#: tests can substitute a decision without standing up the whole identity app -
+#: but defaulted to the real service, because a security decision that silently
+#: resolves to "no authorizer configured, allow" would be worse than useless.
+DEFAULT_TENANT_AUTHORIZER = (
+    "apps.identity.services.authorization.AuthorizationService.can_access_tenant"
+)
+
+
 def _rls_enabled() -> bool:
     """Whether RLS context propagation is active in this environment."""
     return bool(getattr(settings, "RLS_ENABLED", False))
+
+
+def _tenant_authorizer():
+    """Resolve the callable that decides tenant access.
+
+    ``django.utils.module_loading.import_string`` cannot resolve a path whose
+    attribute half is itself dotted - it splits at the last dot and tries to
+    import ``...authorization.AuthorizationService`` as a module. The setting
+    names a *method on a class*, so the split is walked from the right until a
+    real module is found and the remaining attributes are fetched off it.
+    """
+    path = getattr(settings, "RLS_TENANT_AUTHORIZER", DEFAULT_TENANT_AUTHORIZER)
+    parts = path.split(".")
+    for split in range(len(parts) - 1, 0, -1):
+        try:
+            resolved = import_module(".".join(parts[:split]))
+        except ImportError:
+            continue
+        for attribute in parts[split:]:
+            resolved = getattr(resolved, attribute)
+        return resolved
+
+    raise ImportError(
+        f"RLS_TENANT_AUTHORIZER={path!r} could not be resolved to a callable. "
+        "Refusing to run without an authorization decision."
+    )
 
 
 def _set_local(variable: str, value) -> None:
@@ -53,39 +116,112 @@ def _set_local(variable: str, value) -> None:
         cursor.execute(f"SET LOCAL {variable} = %s", [str(value)])
 
 
-class TenantContextMiddleware(MiddlewareMixin):
+class TenantContextMiddleware:
     """
-    Middleware that extracts tenant context and sets it for RLS.
+    Resolve, authorise and establish tenant context for an HTTP request.
 
-    Tenant context is extracted from:
-    1. HTTP header (X-Tenant-ID) for API requests
-    2. Session for web requests
-    3. JWT token claims (if using JWT authentication)
+    Written as a new-style middleware rather than a ``MiddlewareMixin``
+    subclass because it has to own a transaction, and ``process_request``
+    cannot: Django runs ``process_request`` before the view, and under the
+    default autocommit each statement commits on its own, so a ``SET LOCAL``
+    issued there is discarded before the view runs a single query. That is a
+    silent no-op - the request succeeds, the context is gone, and every policy
+    sees ``NULL``. Verified directly against PostgreSQL::
 
-    The context is set using PostgreSQL SET LOCAL, which is transaction-local
-    and automatically clears on COMMIT/ROLLBACK.
+        SET LOCAL app.current_tenant_id = 'abc';
+        WARNING:  SET LOCAL can only be used in transaction blocks
+
+    Wrapping ``get_response`` in ``transaction.atomic()`` is what makes the
+    setting outlive the statement that made it. The cost is real and worth
+    stating: every request now holds a transaction open for its whole
+    duration, and a ``StreamingHttpResponse`` outlives the block that would
+    have carried the context. There is no way to have transaction-local RLS
+    context without a transaction spanning the work that uses it.
+
+    The order below is the whole point of this class:
+
+        1. authenticated user      - trusted, from the session
+        2. requested tenant        - *untrusted*, straight from the client
+        3. ``can_access_tenant()`` - the authorization decision
+        4. establish context       - only if step 3 said yes
+        5. run the view
+
+    Step 4 is the only place in the request path that establishes tenant
+    context, and it is unreachable without step 3. If the decision machinery
+    is ever broken or forgotten, the request runs with no tenant context and
+    RLS returns zero rows - an outage, not a leak.
     """
 
-    def process_request(self, request: HttpRequest) -> HttpResponse | None:
-        """Extract tenant context from request and set in database session."""
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        with transaction.atomic():
+            self._establish_context(request)
+            return self.get_response(request)
+
+    # -- context establishment ----------------------------------------------
+
+    def _establish_context(self, request: HttpRequest) -> None:
+        request.tenant_id = None
+
+        if _rls_enabled():
+            # The user is set before the tenant because the authorizer queries
+            # are policed by the pre-context read set, which keys on
+            # `app.current_user_id`. It comes from the authenticated session,
+            # not from the request body, so it is not caller-chosen.
+            self._set_user_context(request)
+
         tenant_id = self._extract_tenant_id(request)
+        if not tenant_id:
+            # No tenant asked for. Endpoints that legitimately run without one
+            # (login, register, /me/) work here; tenant-scoped data does not,
+            # because with no context every policy denies.
+            return
 
-        if tenant_id:
-            self._set_tenant_context(tenant_id, request)
-            request.tenant_id = tenant_id
-        else:
-            # No tenant context - will be handled by RLS policies
-            request.tenant_id = None
+        tenant = self._resolve_authorized_tenant(request, tenant_id)
+        if tenant is None:
+            raise PermissionDenied(
+                "You do not have access to the requested tenant."
+            )
 
-        return None
+        request.tenant_id = tenant_id
+        if _rls_enabled():
+            _set_local(TENANT_CONTEXT_VARIABLE, tenant_id)
+            entity_id = getattr(request, "legal_entity_id", None)
+            if entity_id:
+                _set_local(ENTITY_CONTEXT_VARIABLE, entity_id)
 
-    def process_response(self, request: HttpRequest, response: HttpResponse) -> HttpResponse:
-        """Clean up tenant context after request."""
-        # SET LOCAL automatically clears on transaction end, so no explicit cleanup needed
-        # But we clear the request attribute for safety
-        if hasattr(request, "tenant_id"):
-            delattr(request, "tenant_id")
-        return response
+    def _resolve_authorized_tenant(self, request: HttpRequest, tenant_id: str):
+        """Return the tenant if the caller may assume it, else ``None``.
+
+        A caller-supplied tenant id is a *request*, not a grant. It is looked
+        up and then put to the one authoritative decision, which covers both
+        routes in: direct membership, and an active advisor access grant.
+        Anything else - an unauthenticated caller, an unknown tenant, a tenant
+        the caller merely knows the id of - is refused here, before any context
+        is established.
+        """
+        user = getattr(request, "user", None)
+        if user is None or not getattr(user, "is_authenticated", False):
+            return None
+
+        authorize = _tenant_authorizer()
+
+        # Imported here rather than at module scope so that `common` does not
+        # hard-depend on a bounded context at import time.
+        from apps.identity.models import Tenant
+
+        try:
+            tenant = Tenant.objects.get(pk=tenant_id)
+        except (Tenant.DoesNotExist, ValidationError, ValueError, TypeError):
+            # A header value that is not a uuid reaches the UUIDField lookup
+            # and raises django.core.exceptions.ValidationError from
+            # get_prep_value - which is not a ValueError subclass despite the
+            # name. A malformed tenant id is a denied request, not a 500.
+            return None
+
+        return tenant if authorize(user, tenant) else None
 
     def _extract_tenant_id(self, request: HttpRequest) -> str | None:
         """Extract tenant ID from request using multiple strategies."""
@@ -106,31 +242,12 @@ class TenantContextMiddleware(MiddlewareMixin):
 
         return None
 
-    def _set_tenant_context(self, tenant_id: str, request: HttpRequest) -> None:
-        """Set tenant context in PostgreSQL session using SET LOCAL."""
-        if not _rls_enabled():
-            # RLS disabled (e.g., in development/testing)
+    def _set_user_context(self, request: HttpRequest) -> None:
+        """Put the authenticated user's id in the session, for RLS to read."""
+        user = getattr(request, "user", None)
+        if user is None or not getattr(user, "is_authenticated", False):
             return
-
-        # Use SET LOCAL for transaction-local context
-        # This automatically clears on COMMIT/ROLLBACK
-        try:
-            _set_local(TENANT_CONTEXT_VARIABLE, tenant_id)
-
-            # Also set user_id if authenticated
-            if hasattr(request, "user") and request.user.is_authenticated:
-                _set_local(USER_CONTEXT_VARIABLE, request.user.id)
-
-            # Set legal_entity_id if available (for entity-scoped queries)
-            if hasattr(request, "legal_entity_id") and request.legal_entity_id:
-                _set_local(ENTITY_CONTEXT_VARIABLE, request.legal_entity_id)
-        except Exception as e:
-            # Log error but don't fail the request
-            # RLS policies will deny access if context is missing
-            import logging
-
-            logger = logging.getLogger(__name__)
-            logger.error(f"Failed to set tenant context: {e}")
+        _set_local(USER_CONTEXT_VARIABLE, user.pk)
 
 
 class TenantContext:
@@ -281,6 +398,7 @@ def _current_setting(variable: str):
 
 
 __all__ = [
+    "DEFAULT_TENANT_AUTHORIZER",
     "TENANT_CONTEXT_VARIABLE",
     "USER_CONTEXT_VARIABLE",
     "ENTITY_CONTEXT_VARIABLE",
