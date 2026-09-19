@@ -6,7 +6,7 @@
 
 **Last Session Summary:** Made the reimagined tree actually run. It had never been executed — it could not be, because a phantom `decimal-converter` dependency made `pip install` impossible and a missing `Decimal` import in `apps/accounting/models/fiscal.py` killed `django.setup()`. After provisioning an environment at `~/.venvs/gnucash-reimagined` and repairing both, plus 7 initial migrations and the ADR-010 trigger migration, the suite collects cleanly at 186 tests and runs on real PostgreSQL 16.15: **120 passed, 66 failed** (baseline was 80/89, and before that, nothing ran at all). Golden accounting is **40/40**, business documents **15/15**, reporting **18/18**. Phase E.1's models-and-services migration turned out to be materially incomplete — services and support modules were dropped during consolidation — and this session repaired the accounting, business-documents and reporting halves of that. Identity services and the document-intelligence test structure remain.
 
-**Branch / HEAD:** `modernization/reimagine-scaffold` @ `6af43d13cb` — local branch, no upstream tracking, **not pushed**. Working tree is **dirty**: 64 changed paths (14 modified production files, 7 new migration directories, new service modules across reporting / identity / document_intelligence, and the restructured `tests/` tree).
+**Branch / HEAD:** `modernization/reimagine-scaffold` @ `1f8972b30e` — **pushed to `origin`** (`faizel-noorgat/gnucash`) with upstream tracking set; local HEAD, remote HEAD and the working tree all verified identical. Working tree **clean**. `origin/stable` remains at upstream `fb2c773bf6`, untouched. This is the first time the modernization workstream has existed off this machine.
 
 **Workstream:** `modernization`
 

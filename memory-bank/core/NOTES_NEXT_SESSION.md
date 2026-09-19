@@ -1,7 +1,7 @@
 # Notes for Next Session
 
 **Written:** 2026-09-19T13:26:04Z
-**Status at Close:** IDLE. Branch `modernization/reimagine-scaffold` @ `6af43d13cb`, working tree **dirty (64 paths)**, branch **local and unpushed**. The reimagined Django tree now genuinely executes: 186 tests collected, 120 passed, 66 failed on PostgreSQL 16.15.
+**Status at Close:** IDLE. Branch `modernization/reimagine-scaffold` @ `1f8972b30e`, **pushed to the fork with upstream tracking**, working tree **clean**. The reimagined Django tree now genuinely executes: 186 tests collected, 120 passed, 66 failed on PostgreSQL 16.15.
 
 ---
 
@@ -13,18 +13,13 @@
 
    Port behaviour from `identity-access/identity_access/domain/services/`. Target the flat `apps/identity/services/` package — do **not** recreate the legacy `domain/` + `infrastructure/` layering. The contract is `tests/identity/unit/test_services.py`; make the methods match what it calls.
 
-2. **T-0009 — Push the branch.** The entire modernization workstream, plus everything this session produced, exists only on this machine.
-   ```bash
-   git push -u origin modernization/reimagine-scaffold
-   ```
+2. **B-0002 — Decide the document-intelligence test structure.** 25 of 32 tests subclass `unittest.TestCase` while their methods take pytest fixtures, which pytest cannot inject. This is structural, not implementation work: no amount of code makes them pass. Choose between rewriting the classes as plain pytest classes or moving fixtures into `setUp()`. Affects BR-DI-001 through BR-DI-010 coverage.
 
-3. **B-0002 — Decide the document-intelligence test structure.** 25 of 32 tests subclass `unittest.TestCase` while their methods take pytest fixtures, which pytest cannot inject. This is structural, not implementation work: no amount of code makes them pass. Choose between rewriting the classes as plain pytest classes or moving fixtures into `setUp()`. Affects BR-DI-001 through BR-DI-010 coverage.
+3. **B-0004 then B-0003 — provision RLS.** B-0004 first: `docker/init-db.sql` declares `get_current_user_id()` / `get_current_entity_id()` as `RETURNS integer` while every PK is a UUID, and the function's `EXCEPTION WHEN OTHERS THEN RETURN NULL` swallows the failed cast, so policies would read NULL silently. Fix the return types, then write a `RunSQL` migration under `common/rls/` installing the functions and policies.
 
-4. **B-0004 then B-0003 — provision RLS.** B-0004 first: `docker/init-db.sql` declares `get_current_user_id()` / `get_current_entity_id()` as `RETURNS integer` while every PK is a UUID, and the function's `EXCEPTION WHEN OTHERS THEN RETURN NULL` swallows the failed cast, so policies would read NULL silently. Fix the return types, then write a `RunSQL` migration under `common/rls/` installing the functions and policies.
+4. **T-0014 — the unmanaged `ImmutablePostedJournal*` models break every ORM delete** of a journal entry or line: Django's deletion collector follows their relations and emits `DELETE FROM accounting_immutable_posted_journal_line`, which does not exist. Either give them real tables or take them out of the deletion path.
 
-5. **T-0014 — the unmanaged `ImmutablePostedJournal*` models break every ORM delete** of a journal entry or line: Django's deletion collector follows their relations and emits `DELETE FROM accounting_immutable_posted_journal_line`, which does not exist. Either give them real tables or take them out of the deletion path.
-
-6. **T-0008 — diagnose `test-qof` and `test-gnc-numeric`** in the *upstream* tree (unrelated to the reimagine work):
+5. **T-0008 — diagnose `test-qof` and `test-gnc-numeric`** in the *upstream* tree (unrelated to the reimagine work):
    ```bash
    cmake --build build && ctest --test-dir build -R "test-qof|test-gnc-numeric" --output-on-failure
    ```
