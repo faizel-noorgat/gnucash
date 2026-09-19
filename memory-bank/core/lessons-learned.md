@@ -172,3 +172,43 @@ Format:
 
 **Fix:** One definition, in the place that always runs — for schema, the migration graph. Where a bootstrap script must still exist, strip it to what genuinely cannot come from a migration and have it say why. Use `DROP FUNCTION IF EXISTS` before `CREATE` when a stale definition may exist, and verify the upgrade path by seeding the *old* definition into a scratch database and migrating over it, not by testing only the clean-install path.
 
+
+---
+
+## LL-017 — A policy on a table whose RLS is not enabled does nothing, and nothing says so
+
+**Trigger:** Adding row-level security to existing tables in bulk, especially in a migration that loops over a list.
+
+**Symptom:** `CREATE POLICY` succeeds and the policy appears in `pg_policies`. The table stays completely open. PostgreSQL only consults policies once `relrowsecurity` is set on the table, so `ENABLE ROW LEVEL SECURITY` is a separate, silently-omittable prerequisite — there is no error, no warning, and no catalogue view that reveals the gap unless you deliberately join `pg_class.relrowsecurity`. Here 14 tables received policies in the first draft of a migration and were never enabled; every other assertion in the file still passed, including a test that checked "every tenant-scoped table has a policy".
+
+**Fix:** Treat `ENABLE` + `FORCE` + `CREATE POLICY` as one indivisible unit — a helper function that emits all three, so a policy cannot be created without them. Assert on the **flag**, not on the policy's existence: `SELECT relname FROM pg_class WHERE relrowsecurity AND relforcerowsecurity`. And write a test whose name states the trap (`test_a_policy_alone_does_not_count_as_isolation`), because the failure mode is a test suite that is entirely green over a wide-open table.
+
+---
+
+## LL-018 — "Implemented" is not "ran"; a middleware can look right and never execute
+
+**Trigger:** Code whose effect depends on transaction-scoped state (`SET LOCAL`, temporary tables, cursor state) called from a context that is not inside a transaction.
+
+**Symptom:** `TenantContextMiddleware` set the RLS context in `MiddlewareMixin.process_request`, which Django runs before the view and under autocommit. Every `SET LOCAL` was discarded before the view issued a single query, so the middleware had never done anything at all. Nothing failed: requests succeeded, policies saw `NULL`, and queries returned zero rows — which reads as missing data, not as a broken mechanism. The docstring even warned that callers must be inside `transaction.atomic()`; the middleware was not one of the callers that obeyed it. Confirmed in one command against the real system: `SET LOCAL app.current_tenant_id = 'abc'` alone emits `WARNING: SET LOCAL can only be used in transaction blocks`.
+
+**Fix:** When a mechanism depends on a transaction, the code that sets it must own the transaction — not document the requirement for a caller. Rewrite as new-style middleware (`__init__(get_response)` + `__call__`) wrapping `get_response` in `transaction.atomic()`. Then prove it end to end by asserting *from inside the view*, with the role and context the production path uses; a unit test of the setter would have passed and proved nothing.
+
+---
+
+## LL-019 — Two agents in one working tree is a shared mutable resource, and git will not warn you
+
+**Trigger:** More than one Claude session (or any two writers) running against the same checkout at the same time.
+
+**Symptom:** Two distinct failures, both silent and both misattributed. First, one session ran `git stash push -m <msg>` followed by `git reset --hard HEAD`, discarding ~1600 uncommitted lines from the other; `git status` then read clean, which is precisely what a healthy tree looks like. Second, both sessions' test runs used the hard-coded `gnucash_test` database, so two pytest processes created and dropped the same database under each other — producing `duplicate key ... auth_permission` after a truncated flush, `database "gnucash_test" does not exist` mid-run, and results that flipped between identical invocations. Roughly 90 phantom failures were bisected before the concurrency was noticed, and the code was innocent throughout.
+
+**Fix:** Treat a checkout as single-writer. Before bisecting a mystery failure, check whether another process owns the resource (`ps`, database list, transcript mtimes) before assuming a recent edit is at fault. Give each concurrent run its own test database via a settings module outside the repo rather than editing the committed settings. And `git stash` + `reset` is not a safe "clean up" — check for uncommitted work first; the recovery here worked only because a stash happened to exist, and `git stash apply` (not `pop`) keeps that safety net until the restore is verified.
+
+---
+
+## LL-020 — A child typed more strictly than its parent makes valid parent rows unusable
+
+**Trigger:** Adding a foreign key or constraint to a child table to strengthen an invariant the parent does not itself enforce.
+
+**Symptom:** A passing test broke when `document_extractions` gained a real FK to `tenants`. Its parent, `Document`, stores its tenant as a bare `UUIDField`, so documents can exist against tenant ids that are not rows in `tenants`. The child's stricter FK therefore rejected extractions for documents the database had already accepted — an inconsistency introduced in the name of safety, making some parent rows impossible to attach anything to.
+
+**Fix:** A derived column takes the **shape** of the column it is derived from: a foreign key where the parent has one, a bare value where it does not. Enforce the invariant that actually matters — that the child agrees with its parent — with a composite key `(parent_id, derived) → parent(pk, derived)`, which is exactly as strong as the parent is and no stronger. If the parent's looseness is itself wrong, fix the parent deliberately and in its own change; do not smuggle the fix in through the child.
