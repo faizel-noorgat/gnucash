@@ -111,8 +111,21 @@ class Role(models.Model):
         return self.name
 
     def get_permissions(self):
-        """Get all permissions for this role."""
-        return self.permissions.filter(is_active=True)
+        """Get all permissions for this role.
+
+        Permissions reach a role through the ``RolePermission`` through-model,
+        whose role FK has ``related_name='role_permissions'``. There is no
+        direct role-to-permission relation, so the previous body - which read
+        ``self.permissions`` - raised AttributeError on every call.
+
+        This is the single definition of what a role grants:
+        ``AuthorizationService`` resolves permissions through this method rather
+        than re-deriving the join, so there is one path to keep correct.
+        """
+        return Permission.objects.filter(
+            role_permissions__role=self,
+            is_active=True,
+        )
 
 
 class RolePermission(models.Model):

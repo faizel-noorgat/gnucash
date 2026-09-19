@@ -13,7 +13,7 @@ from django.utils import timezone
 from apps.identity.models import (
     AdvisorAccessGrant,
     Membership,
-    Permission,
+    Role,
     Tenant,
 )
 
@@ -116,15 +116,19 @@ class AuthorizationService:
         # Roles are matched by name because Membership.role is a string, not a
         # foreign key. A role is in scope if it belongs to this tenant or is a
         # system role (tenant is NULL) - system roles are shared across tenants.
-        return Permission.objects.filter(
-            Q(codename=permission_codename)
-            & Q(is_active=True)
-            & Q(role_permissions__role__name__in=role_names)
-            & (
-                Q(role_permissions__role__tenant=tenant)
-                | Q(role_permissions__role__tenant__isnull=True)
-            )
-        ).exists()
+        #
+        # The permissions themselves come from Role.get_permissions(), so the
+        # RolePermission join is written down in exactly one place. Resolving it
+        # here independently is what let the model method rot into a reference
+        # to a relation that was never declared.
+        in_scope_roles = Role.objects.filter(name__in=role_names).filter(
+            Q(tenant=tenant) | Q(tenant__isnull=True)
+        )
+
+        return any(
+            role.get_permissions().filter(codename=permission_codename).exists()
+            for role in in_scope_roles
+        )
 
     @staticmethod
     def can_access_tenant(user, tenant) -> bool:

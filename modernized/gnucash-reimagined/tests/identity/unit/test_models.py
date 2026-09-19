@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.utils import timezone
 from datetime import timedelta
 from apps.identity.models import (
-    User, Tenant, LegalEntity, Membership, Role, Permission,
+    User, Tenant, LegalEntity, Membership, Role, Permission, RolePermission,
     ApiToken, Practice, PracticeMembership, ClientEngagement,
     AdvisorAccessGrant, Notification
 )
@@ -127,6 +127,58 @@ class TestMembershipModel(TestCase):
 
         assert membership.status == 'active'
         assert membership.accepted_at is not None
+
+
+class TestRoleModel(TestCase):
+    """Unit tests for Role permission resolution.
+
+    Role carries no `permissions` field - permissions attach through the
+    RolePermission through-model. `get_permissions()` used to read
+    `self.permissions` and so raised AttributeError on every call, which no
+    test caught because nothing called it.
+    """
+
+    def test_get_permissions_returns_the_roles_granted_permissions(self):
+        """A role resolves to the permissions linked to it."""
+        role = Role.objects.create(name='Accountant')
+        view_invoices = Permission.objects.create(
+            name='View invoices', codename='view_invoices'
+        )
+        close_period = Permission.objects.create(
+            name='Close period', codename='close_period'
+        )
+        RolePermission.objects.create(role=role, permission=view_invoices)
+        RolePermission.objects.create(role=role, permission=close_period)
+
+        assert {p.codename for p in role.get_permissions()} == {
+            'view_invoices',
+            'close_period',
+        }
+
+    def test_get_permissions_excludes_other_roles_and_inactive_permissions(self):
+        """Only this role's active permissions come back."""
+        role = Role.objects.create(name='Accountant')
+        other_role = Role.objects.create(name='Viewer')
+
+        granted = Permission.objects.create(name='View invoices', codename='view_invoices')
+        disabled = Permission.objects.create(
+            name='Close period', codename='close_period', is_active=False
+        )
+        not_granted_to_this_role = Permission.objects.create(
+            name='Manage users', codename='manage_users'
+        )
+
+        RolePermission.objects.create(role=role, permission=granted)
+        RolePermission.objects.create(role=role, permission=disabled)
+        RolePermission.objects.create(role=other_role, permission=not_granted_to_this_role)
+
+        assert {p.codename for p in role.get_permissions()} == {'view_invoices'}
+
+    def test_get_permissions_is_empty_for_a_role_with_no_grants(self):
+        """A role with no links resolves to nothing, not to an error."""
+        role = Role.objects.create(name='Unused Role')
+
+        assert list(role.get_permissions()) == []
 
 
 class TestApiTokenModel(TestCase):
