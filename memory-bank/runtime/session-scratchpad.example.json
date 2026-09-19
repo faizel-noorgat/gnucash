@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "session": {
+    "id": "2026-09-04T05:37:40Z",
+    "started_at": "2026-09-04T05:37:40Z",
+    "updated_at": "2026-09-04T05:37:40Z"
+  },
+  "next_ids": {
+    "task": 1,
+    "question": 1,
+    "blocker": 1,
+    "decision": 1,
+    "follow_up": 1
+  },
+  "items": []
+}

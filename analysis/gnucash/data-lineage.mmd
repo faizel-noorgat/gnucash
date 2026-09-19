@@ -1,0 +1,47 @@
+graph LR
+    %% Programs
+    XML_BE["XML Backend<br/>gnc-xml-backend.cpp"]
+    SQL_BE["SQL Backend<br/>gnc-sql-backend.cpp"]
+    DBI_BE["DBI Backend<br/>gnc-backend-dbi.cpp"]
+    QIF_IMP["QIF Import<br/>qif-import.c"]
+    CSV_IMP["CSV Import<br/>csv-import.c"]
+    OFX_IMP["OFX Import<br/>ofx-import.c"]
+    AQB["AQBanking<br/>gnc-plugin-aqbanking.c"]
+    REPORT["Reports<br/>report.scm"]
+    ENGINE["Core Engine<br/>Account.cpp, Transaction.cpp"]
+
+    %% Data stores
+    XML_FILE["XML Files<br/>.gnucash,.xac"]
+    SQLITE["SQLite DB"]
+    PGSQL["PostgreSQL"]
+    MYSQL["MySQL"]
+    QIF_FILE["QIF Files"]
+    CSV_FILE["CSV Files"]
+    OFX_FILE["OFX Files"]
+    ONLINE["Online Banking<br/>HBCI/OFX"]
+    PREFS["Preferences<br/>GSettings"]
+
+    %% Read edges
+    XML_BE -->|read| XML_FILE
+    SQL_BE -->|read| SQLITE
+    SQL_BE -->|read| PGSQL
+    SQL_BE -->|read| MYSQL
+    QIF_IMP -->|read| QIF_FILE
+    CSV_IMP -->|read| CSV_FILE
+    OFX_IMP -->|read| OFX_FILE
+    AQB -->|read| ONLINE
+    ENGINE -->|read| PREFS
+    REPORT -->|read| ENGINE
+
+    %% Write edges
+    XML_BE -->|write| XML_FILE
+    SQL_BE -->|write| SQLITE
+    SQL_BE -->|write| PGSQL
+    SQL_BE -->|write| MYSQL
+
+    %% Styles
+    classDef program fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
+    classDef datastore fill:#fff4e1,stroke:#f57c00,stroke-width:2px
+
+    class XML_BE,SQL_BE,DBI_BE,QIF_IMP,CSV_IMP,OFX_IMP,AQB,REPORT,ENGINE program
+    class XML_FILE,SQLITE,PGSQL,MYSQL,QIF_FILE,CSV_FILE,OFX_FILE,ONLINE,PREFS datastore

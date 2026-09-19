@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "reporting-analytics"
+version = "0.1.0"
+description = "Reporting & Analytics bounded context for FVA Accounting Platform"
+authors = ["FVA Accounting <dev@fva.sg>"]
+readme = "README.md"
+packages = [{include = "reporting_analytics"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "^5.0"
+djangorestframework = "^3.14"
+psycopg = {version = "^3.1", extras = ["binary"]}
+celery = {version = "^5.3", extras = ["redis"]}
+redis = "^5.0"
+django-filter = "^23.5"
+python-dotenv = "^1.0"
+# AI / Analytics
+numpy = "^1.26"
+pandas = "^2.1"
+# NOTE: LLM client is intentionally not pinned to a specific provider.
+# The ai_explainer service talks to an LLMProvider abstraction; concrete
+# providers (OpenAI, Anthropic, etc.) are selected via env-var at runtime.
+httpx = "^0.26"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4"
+pytest-django = "^4.7"
+pytest-cov = "^4.1"
+pytest-asyncio = "^0.23"
+factory-boy = "^3.3"
+faker = "^22.0"
+black = "^23.12"
+ruff = "^0.1.9"
+mypy = "^1.8"
+responses = "^0.24"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "reporting_analytics.settings.test"
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
+markers = [
+    "acceptance: behavior-contract acceptance tests",
+    "rule: tag a test with its originating behavior-contract rule id",
+    "golden_dependency: tests that require accounting-engine golden tests to pass first",
+]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true

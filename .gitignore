@@ -194,3 +194,15 @@ messages.mo
 /.settings/
 /build/
 *.LCK
+
+# Claude Code session memory — live per-session state, not shared history.
+# memory-bank/core/ and memory-bank/runtime/session-scratchpad.example.json stay tracked.
+/memory-bank/runtime/session-scratchpad.json
+/memory-bank/runtime/session-scratchpad-operation.json
+/memory-bank/runtime/session-scratchpad-archive.jsonl
+/memory-bank/runtime/.scratchpad-test-*/
+
+# Claude Code runtime artifacts
+/.claude/scheduled_tasks.lock
+__pycache__/
+*.py[cod]

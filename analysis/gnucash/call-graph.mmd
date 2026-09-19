@@ -1,0 +1,82 @@
+graph TD
+    %% Entry point highlighted
+    MAIN["gnucash/gnucash.c<br/>main()"]:::entry
+
+    %% Domains
+    subgraph "Core Layer"
+        CU[Core Utilities<br/>libgnucash/core-utils]
+        ENG[Core Engine<br/>libgnucash/engine<br/>~108 files]
+        MOD[Module System<br/>libgnucash/gnc-module]
+    end
+
+    subgraph "Persistence Layer"
+        BE[Backend/Persistence<br/>libgnucash/backend<br/>XML/SQL/DBI]
+    end
+
+    subgraph "Application Layer"
+        AU[App Utilities<br/>libgnucash/app-utils]
+        TAX[Tax<br/>libgnucash/tax]
+    end
+
+    subgraph "UI Layer"
+        GUI[GUI/Gnome<br/>gnucash/gnome<br/>~150 files]
+        REG[Register<br/>gnucash/register]
+        REP[Reports<br/>gnucash/report<br/>Scheme]
+        IE[Import/Export<br/>gnucash/import-export]
+    end
+
+    subgraph "Integration Layer"
+        BIND[Bindings<br/>Guile + Python]
+    end
+
+    %% Entry → GUI
+    MAIN --> GUI
+
+    %% Core dependencies
+    ENG --> CU
+    BE --> ENG
+    BE --> CU
+    MOD --> CU
+
+    %% Application
+    AU --> ENG
+    AU --> CU
+    TAX --> ENG
+
+    %% UI
+    GUI --> ENG
+    GUI --> AU
+    GUI --> BE
+    GUI --> REG
+    GUI --> CU
+
+    REG --> ENG
+    REG --> AU
+
+    REP --> ENG
+    REP --> AU
+    REP --> CU
+
+    IE --> ENG
+    IE --> AU
+    IE --> GUI
+    IE --> MOD
+
+    %% Integration
+    BIND --> ENG
+    BIND --> AU
+    BIND --> CU
+
+    %% Styles
+    classDef entry fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px
+    classDef coreLayer fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
+    classDef persistLayer fill:#fff4e1,stroke:#f57c00,stroke-width:2px
+    classDef appLayer fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    classDef uiLayer fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    classDef intLayer fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+
+    class CU,ENG,MOD coreLayer
+    class BE persistLayer
+    class AU,TAX appLayer
+    class GUI,REG,REP,IE uiLayer
+    class BIND intLayer

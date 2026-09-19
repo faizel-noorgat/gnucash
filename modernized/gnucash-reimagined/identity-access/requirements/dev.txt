@@ -1,0 +1,15 @@
+-r base.txt
+
+# Development dependencies
+ipython>=8.18,<9.0
+django-debug-toolbar>=4.2,<5.0
+django-extensions>=3.2,<4.0
+werkzeug>=3.0,<4.0
+
+# Testing
+pytest-xdist>=3.5,<4.0
+pytest-watch>=4.2,<5.0
+
+# Documentation
+mkdocs>=1.5,<2.0
+mkdocs-material>=9.5,<10.0

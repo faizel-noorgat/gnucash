@@ -1,0 +1,2168 @@
+{
+  "system": "GnuCash",
+  "root": {
+    "id": "sys",
+    "name": "GnuCash",
+    "kind": "system",
+    "children": [
+      {
+        "id": "dom:engine",
+        "name": "Core Engine",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "libgnucash/engine/ScrubBusiness.c",
+            "name": "ScrubBusiness",
+            "kind": "module",
+            "language": "c",
+            "loc": 479,
+            "file": "libgnucash/engine/ScrubBusiness.c"
+          },
+          {
+            "id": "libgnucash/engine/gncTaxTable.c",
+            "name": "gncTaxTable",
+            "kind": "module",
+            "language": "c",
+            "loc": 821,
+            "file": "libgnucash/engine/gncTaxTable.c"
+          },
+          {
+            "id": "libgnucash/engine/gncInvoice.c",
+            "name": "gncInvoice",
+            "kind": "module",
+            "language": "c",
+            "loc": 1671,
+            "file": "libgnucash/engine/gncInvoice.c"
+          },
+          {
+            "id": "libgnucash/engine/gnc-uri-utils.c",
+            "name": "gnc-uri-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 242,
+            "file": "libgnucash/engine/gnc-uri-utils.c"
+          },
+          {
+            "id": "libgnucash/engine/gncEmployee.c",
+            "name": "gncEmployee",
+            "kind": "module",
+            "language": "c",
+            "loc": 761,
+            "file": "libgnucash/engine/gncEmployee.c"
+          },
+          {
+            "id": "libgnucash/engine/gncBillTerm.c",
+            "name": "gncBillTerm",
+            "kind": "module",
+            "language": "c",
+            "loc": 657,
+            "file": "libgnucash/engine/gncBillTerm.c"
+          },
+          {
+            "id": "libgnucash/engine/gnc-event.c",
+            "name": "gnc-event",
+            "kind": "module",
+            "language": "c",
+            "loc": 27,
+            "file": "libgnucash/engine/gnc-event.c"
+          },
+          {
+            "id": "libgnucash/engine/engine-helpers.c",
+            "name": "engine-helpers",
+            "kind": "module",
+            "language": "c",
+            "loc": 145,
+            "file": "libgnucash/engine/engine-helpers.c"
+          },
+          {
+            "id": "libgnucash/engine/gnc-hooks.c",
+            "name": "gnc-hooks",
+            "kind": "module",
+            "language": "c",
+            "loc": 169,
+            "file": "libgnucash/engine/gnc-hooks.c"
+          },
+          {
+            "id": "libgnucash/engine/gncOwner.c",
+            "name": "gncOwner",
+            "kind": "module",
+            "language": "c",
+            "loc": 1239,
+            "file": "libgnucash/engine/gncOwner.c"
+          },
+          {
+            "id": "libgnucash/engine/gnc-session.c",
+            "name": "gnc-session",
+            "kind": "module",
+            "language": "c",
+            "loc": 36,
+            "file": "libgnucash/engine/gnc-session.c"
+          },
+          {
+            "id": "libgnucash/engine/gncOrder.c",
+            "name": "gncOrder",
+            "kind": "module",
+            "language": "c",
+            "loc": 439,
+            "file": "libgnucash/engine/gncOrder.c"
+          },
+          {
+            "id": "libgnucash/engine/gncAddress.c",
+            "name": "gncAddress",
+            "kind": "module",
+            "language": "c",
+            "loc": 534,
+            "file": "libgnucash/engine/gncAddress.c"
+          },
+          {
+            "id": "libgnucash/engine/ScrubBudget.c",
+            "name": "ScrubBudget",
+            "kind": "module",
+            "language": "c",
+            "loc": 151,
+            "file": "libgnucash/engine/ScrubBudget.c"
+          },
+          {
+            "id": "libgnucash/engine/gncEntry.c",
+            "name": "gncEntry",
+            "kind": "module",
+            "language": "c",
+            "loc": 1324,
+            "file": "libgnucash/engine/gncEntry.c"
+          },
+          {
+            "id": "libgnucash/engine/gncCustomer.c",
+            "name": "gncCustomer",
+            "kind": "module",
+            "language": "c",
+            "loc": 756,
+            "file": "libgnucash/engine/gncCustomer.c"
+          },
+          {
+            "id": "libgnucash/engine/gncVendor.c",
+            "name": "gncVendor",
+            "kind": "module",
+            "language": "c",
+            "loc": 821,
+            "file": "libgnucash/engine/gncVendor.c"
+          },
+          {
+            "id": "libgnucash/engine/gncIDSearch.c",
+            "name": "gncIDSearch",
+            "kind": "module",
+            "language": "c",
+            "loc": 107,
+            "file": "libgnucash/engine/gncIDSearch.c"
+          },
+          {
+            "id": "libgnucash/engine/gnc-accounting-period.c",
+            "name": "gnc-accounting-period",
+            "kind": "module",
+            "language": "c",
+            "loc": 240,
+            "file": "libgnucash/engine/gnc-accounting-period.c"
+          },
+          {
+            "id": "libgnucash/engine/gncJob.c",
+            "name": "gncJob",
+            "kind": "module",
+            "language": "c",
+            "loc": 447,
+            "file": "libgnucash/engine/gncJob.c"
+          }
+        ]
+      },
+      {
+        "id": "dom:backend",
+        "name": "Backend/Persistence",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "libgnucash/backend/sql/gnc-job-sql.cpp",
+            "name": "gnc-job-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 88,
+            "file": "libgnucash/backend/sql/gnc-job-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-sql-object-backend.cpp",
+            "name": "gnc-sql-object-backend",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 59,
+            "file": "libgnucash/backend/sql/gnc-sql-object-backend.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-entry-sql.cpp",
+            "name": "gnc-entry-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 173,
+            "file": "libgnucash/backend/sql/gnc-entry-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-budget-sql.cpp",
+            "name": "gnc-budget-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 333,
+            "file": "libgnucash/backend/sql/gnc-budget-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-vendor-sql.cpp",
+            "name": "gnc-vendor-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 139,
+            "file": "libgnucash/backend/sql/gnc-vendor-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-commodity-sql.cpp",
+            "name": "gnc-commodity-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 161,
+            "file": "libgnucash/backend/sql/gnc-commodity-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-employee-sql.cpp",
+            "name": "gnc-employee-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 160,
+            "file": "libgnucash/backend/sql/gnc-employee-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-sql-result.cpp",
+            "name": "gnc-sql-result",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 14,
+            "file": "libgnucash/backend/sql/gnc-sql-result.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-slots-sql.cpp",
+            "name": "gnc-slots-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 694,
+            "file": "libgnucash/backend/sql/gnc-slots-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-tax-table-sql.cpp",
+            "name": "gnc-tax-table-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 373,
+            "file": "libgnucash/backend/sql/gnc-tax-table-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-owner-sql.cpp",
+            "name": "gnc-owner-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 166,
+            "file": "libgnucash/backend/sql/gnc-owner-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-bill-term-sql.cpp",
+            "name": "gnc-bill-term-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 247,
+            "file": "libgnucash/backend/sql/gnc-bill-term-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/escape.cpp",
+            "name": "escape",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 87,
+            "file": "libgnucash/backend/sql/escape.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-recurrence-sql.cpp",
+            "name": "gnc-recurrence-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 286,
+            "file": "libgnucash/backend/sql/gnc-recurrence-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-address-sql.cpp",
+            "name": "gnc-address-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 73,
+            "file": "libgnucash/backend/sql/gnc-address-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-lots-sql.cpp",
+            "name": "gnc-lots-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 132,
+            "file": "libgnucash/backend/sql/gnc-lots-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-order-sql.cpp",
+            "name": "gnc-order-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 112,
+            "file": "libgnucash/backend/sql/gnc-order-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-price-sql.cpp",
+            "name": "gnc-price-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 137,
+            "file": "libgnucash/backend/sql/gnc-price-sql.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-sql-column-table-entry.cpp",
+            "name": "gnc-sql-column-table-entry",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 574,
+            "file": "libgnucash/backend/sql/gnc-sql-column-table-entry.cpp"
+          },
+          {
+            "id": "libgnucash/backend/sql/gnc-book-sql.cpp",
+            "name": "gnc-book-sql",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 112,
+            "file": "libgnucash/backend/sql/gnc-book-sql.cpp"
+          }
+        ]
+      },
+      {
+        "id": "dom:core-utils",
+        "name": "Core Utilities",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "libgnucash/core-utils/binreloc.c",
+            "name": "binreloc",
+            "kind": "module",
+            "language": "c",
+            "loc": 283,
+            "file": "libgnucash/core-utils/binreloc.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-gkeyfile-utils.c",
+            "name": "gnc-gkeyfile-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 107,
+            "file": "libgnucash/core-utils/gnc-gkeyfile-utils.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-locale-utils.c",
+            "name": "gnc-locale-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 87,
+            "file": "libgnucash/core-utils/gnc-locale-utils.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-path.c",
+            "name": "gnc-path",
+            "kind": "module",
+            "language": "c",
+            "loc": 106,
+            "file": "libgnucash/core-utils/gnc-path.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-glib-utils.c",
+            "name": "gnc-glib-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 258,
+            "file": "libgnucash/core-utils/gnc-glib-utils.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-version.c",
+            "name": "gnc-version",
+            "kind": "module",
+            "language": "c",
+            "loc": 23,
+            "file": "libgnucash/core-utils/gnc-version.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-environment.c",
+            "name": "gnc-environment",
+            "kind": "module",
+            "language": "c",
+            "loc": 159,
+            "file": "libgnucash/core-utils/gnc-environment.c"
+          },
+          {
+            "id": "libgnucash/core-utils/test/test-userdata-dir-invalid-home.c",
+            "name": "test-userdata-dir-invalid-home",
+            "kind": "module",
+            "language": "c",
+            "loc": 82,
+            "file": "libgnucash/core-utils/test/test-userdata-dir-invalid-home.c"
+          },
+          {
+            "id": "libgnucash/core-utils/test/test-resolve-file-path.c",
+            "name": "test-resolve-file-path",
+            "kind": "module",
+            "language": "c",
+            "loc": 64,
+            "file": "libgnucash/core-utils/test/test-resolve-file-path.c"
+          },
+          {
+            "id": "libgnucash/core-utils/test/test-gnc-glib-utils.c",
+            "name": "test-gnc-glib-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 113,
+            "file": "libgnucash/core-utils/test/test-gnc-glib-utils.c"
+          },
+          {
+            "id": "libgnucash/core-utils/test/test-userdata-dir.c",
+            "name": "test-userdata-dir",
+            "kind": "module",
+            "language": "c",
+            "loc": 279,
+            "file": "libgnucash/core-utils/test/test-userdata-dir.c"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-locale-utils.cpp",
+            "name": "gnc-locale-utils",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 64,
+            "file": "libgnucash/core-utils/gnc-locale-utils.cpp"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-unicode.cpp",
+            "name": "gnc-unicode",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 164,
+            "file": "libgnucash/core-utils/gnc-unicode.cpp"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-filepath-utils.cpp",
+            "name": "gnc-filepath-utils",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 775,
+            "file": "libgnucash/core-utils/gnc-filepath-utils.cpp"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-prefs.cpp",
+            "name": "gnc-prefs",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 300,
+            "file": "libgnucash/core-utils/gnc-prefs.cpp"
+          },
+          {
+            "id": "libgnucash/core-utils/test/gtest-path-utilities.cpp",
+            "name": "gtest-path-utilities",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 105,
+            "file": "libgnucash/core-utils/test/gtest-path-utilities.cpp"
+          },
+          {
+            "id": "libgnucash/core-utils/test/gtest-gnc-unicode.cpp",
+            "name": "gtest-gnc-unicode",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 102,
+            "file": "libgnucash/core-utils/test/gtest-gnc-unicode.cpp"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-version.h",
+            "name": "gnc-version",
+            "kind": "module",
+            "language": "h",
+            "loc": 11,
+            "file": "libgnucash/core-utils/gnc-version.h"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-path.h",
+            "name": "gnc-path",
+            "kind": "module",
+            "language": "h",
+            "loc": 18,
+            "file": "libgnucash/core-utils/gnc-path.h"
+          },
+          {
+            "id": "libgnucash/core-utils/gnc-filepath-utils.h",
+            "name": "gnc-filepath-utils",
+            "kind": "module",
+            "language": "h",
+            "loc": 33,
+            "file": "libgnucash/core-utils/gnc-filepath-utils.h"
+          }
+        ]
+      },
+      {
+        "id": "dom:app-utils",
+        "name": "App Utilities",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "libgnucash/app-utils/file-utils.c",
+            "name": "file-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 63,
+            "file": "libgnucash/app-utils/file-utils.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-prefs-utils.c",
+            "name": "gnc-prefs-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 77,
+            "file": "libgnucash/app-utils/gnc-prefs-utils.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-entry-quickfill.c",
+            "name": "gnc-entry-quickfill",
+            "kind": "module",
+            "language": "c",
+            "loc": 97,
+            "file": "libgnucash/app-utils/gnc-entry-quickfill.c"
+          },
+          {
+            "id": "libgnucash/app-utils/QuickFill.c",
+            "name": "QuickFill",
+            "kind": "module",
+            "language": "c",
+            "loc": 293,
+            "file": "libgnucash/app-utils/QuickFill.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-state.c",
+            "name": "gnc-state",
+            "kind": "module",
+            "language": "c",
+            "loc": 189,
+            "file": "libgnucash/app-utils/gnc-state.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-addr-quickfill.c",
+            "name": "gnc-addr-quickfill",
+            "kind": "module",
+            "language": "c",
+            "loc": 141,
+            "file": "libgnucash/app-utils/gnc-addr-quickfill.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-account-merge.c",
+            "name": "gnc-account-merge",
+            "kind": "module",
+            "language": "c",
+            "loc": 45,
+            "file": "libgnucash/app-utils/gnc-account-merge.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-exp-parser.c",
+            "name": "gnc-exp-parser",
+            "kind": "module",
+            "language": "c",
+            "loc": 478,
+            "file": "libgnucash/app-utils/gnc-exp-parser.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-help-utils.c",
+            "name": "gnc-help-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 90,
+            "file": "libgnucash/app-utils/gnc-help-utils.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-sx-instance-model.c",
+            "name": "gnc-sx-instance-model",
+            "kind": "module",
+            "language": "c",
+            "loc": 1537,
+            "file": "libgnucash/app-utils/gnc-sx-instance-model.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gfec.c",
+            "name": "gfec",
+            "kind": "module",
+            "language": "c",
+            "loc": 124,
+            "file": "libgnucash/app-utils/gfec.c"
+          },
+          {
+            "id": "libgnucash/app-utils/calculation/expression_parser.c",
+            "name": "expression_parser",
+            "kind": "module",
+            "language": "c",
+            "loc": 653,
+            "file": "libgnucash/app-utils/calculation/expression_parser.c"
+          },
+          {
+            "id": "libgnucash/app-utils/calculation/fin.c",
+            "name": "fin",
+            "kind": "module",
+            "language": "c",
+            "loc": 918,
+            "file": "libgnucash/app-utils/calculation/fin.c"
+          },
+          {
+            "id": "libgnucash/app-utils/test/test-exp-parser.c",
+            "name": "test-exp-parser",
+            "kind": "module",
+            "language": "c",
+            "loc": 195,
+            "file": "libgnucash/app-utils/test/test-exp-parser.c"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-ui-util.cpp",
+            "name": "gnc-ui-util",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 1750,
+            "file": "libgnucash/app-utils/gnc-ui-util.cpp"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-quotes.cpp",
+            "name": "gnc-quotes",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 888,
+            "file": "libgnucash/app-utils/gnc-quotes.cpp"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-gsettings.cpp",
+            "name": "gnc-gsettings",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 596,
+            "file": "libgnucash/app-utils/gnc-gsettings.cpp"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-autoclear.cpp",
+            "name": "gnc-autoclear",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 176,
+            "file": "libgnucash/app-utils/gnc-autoclear.cpp"
+          },
+          {
+            "id": "libgnucash/app-utils/gnc-ui-balances.cpp",
+            "name": "gnc-ui-balances",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 273,
+            "file": "libgnucash/app-utils/gnc-ui-balances.cpp"
+          },
+          {
+            "id": "libgnucash/app-utils/mocks/gmock-gnc-prefs.cpp",
+            "name": "gmock-gnc-prefs",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 52,
+            "file": "libgnucash/app-utils/mocks/gmock-gnc-prefs.cpp"
+          }
+        ]
+      },
+      {
+        "id": "dom:gui",
+        "name": "GUI/Gnome",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "gnucash/gnome/gnc-split-reg.c",
+            "name": "gnc-split-reg",
+            "kind": "module",
+            "language": "c",
+            "loc": 1937,
+            "file": "gnucash/gnome/gnc-split-reg.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-invoice.c",
+            "name": "dialog-invoice",
+            "kind": "module",
+            "language": "c",
+            "loc": 2945,
+            "file": "gnucash/gnome/dialog-invoice.c"
+          },
+          {
+            "id": "gnucash/gnome/gnc-plugin-business.c",
+            "name": "gnc-plugin-business",
+            "kind": "module",
+            "language": "c",
+            "loc": 717,
+            "file": "gnucash/gnome/gnc-plugin-business.c"
+          },
+          {
+            "id": "gnucash/gnome/gnc-plugin-account-tree.c",
+            "name": "gnc-plugin-account-tree",
+            "kind": "module",
+            "language": "c",
+            "loc": 64,
+            "file": "gnucash/gnome/gnc-plugin-account-tree.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-sx-since-last-run.c",
+            "name": "dialog-sx-since-last-run",
+            "kind": "module",
+            "language": "c",
+            "loc": 1243,
+            "file": "gnucash/gnome/dialog-sx-since-last-run.c"
+          },
+          {
+            "id": "gnucash/gnome/assistant-acct-period.c",
+            "name": "assistant-acct-period",
+            "kind": "module",
+            "language": "c",
+            "loc": 409,
+            "file": "gnucash/gnome/assistant-acct-period.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-order.c",
+            "name": "dialog-order",
+            "kind": "module",
+            "language": "c",
+            "loc": 671,
+            "file": "gnucash/gnome/dialog-order.c"
+          },
+          {
+            "id": "gnucash/gnome/top-level.c",
+            "name": "top-level",
+            "kind": "module",
+            "language": "c",
+            "loc": 273,
+            "file": "gnucash/gnome/top-level.c"
+          },
+          {
+            "id": "gnucash/gnome/business-urls.c",
+            "name": "business-urls",
+            "kind": "module",
+            "language": "c",
+            "loc": 226,
+            "file": "gnucash/gnome/business-urls.c"
+          },
+          {
+            "id": "gnucash/gnome/gnc-plugin-register.c",
+            "name": "gnc-plugin-register",
+            "kind": "module",
+            "language": "c",
+            "loc": 90,
+            "file": "gnucash/gnome/gnc-plugin-register.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-tax-info.c",
+            "name": "dialog-tax-info",
+            "kind": "module",
+            "language": "c",
+            "loc": 1257,
+            "file": "gnucash/gnome/dialog-tax-info.c"
+          },
+          {
+            "id": "gnucash/gnome/window-autoclear.c",
+            "name": "window-autoclear",
+            "kind": "module",
+            "language": "c",
+            "loc": 164,
+            "file": "gnucash/gnome/window-autoclear.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-vendor.c",
+            "name": "dialog-vendor",
+            "kind": "module",
+            "language": "c",
+            "loc": 524,
+            "file": "gnucash/gnome/dialog-vendor.c"
+          },
+          {
+            "id": "gnucash/gnome/search-owner.c",
+            "name": "search-owner",
+            "kind": "module",
+            "language": "c",
+            "loc": 173,
+            "file": "gnucash/gnome/search-owner.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-find-account.c",
+            "name": "dialog-find-account",
+            "kind": "module",
+            "language": "c",
+            "loc": 408,
+            "file": "gnucash/gnome/dialog-find-account.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-find-transactions.c",
+            "name": "dialog-find-transactions",
+            "kind": "module",
+            "language": "c",
+            "loc": 156,
+            "file": "gnucash/gnome/dialog-find-transactions.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-new-user.c",
+            "name": "dialog-new-user",
+            "kind": "module",
+            "language": "c",
+            "loc": 132,
+            "file": "gnucash/gnome/dialog-new-user.c"
+          },
+          {
+            "id": "gnucash/gnome/assistant-stock-split.c",
+            "name": "assistant-stock-split",
+            "kind": "module",
+            "language": "c",
+            "loc": 552,
+            "file": "gnucash/gnome/assistant-stock-split.c"
+          },
+          {
+            "id": "gnucash/gnome/dialog-custom-report.c",
+            "name": "dialog-custom-report",
+            "kind": "module",
+            "language": "c",
+            "loc": 461,
+            "file": "gnucash/gnome/dialog-custom-report.c"
+          },
+          {
+            "id": "gnucash/gnome/gnc-plugin-report-system.c",
+            "name": "gnc-plugin-report-system",
+            "kind": "module",
+            "language": "c",
+            "loc": 154,
+            "file": "gnucash/gnome/gnc-plugin-report-system.c"
+          }
+        ]
+      },
+      {
+        "id": "dom:register",
+        "name": "Register",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "gnucash/register/register-core/recncell.c",
+            "name": "recncell",
+            "kind": "module",
+            "language": "c",
+            "loc": 129,
+            "file": "gnucash/register/register-core/recncell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/table-allgui.c",
+            "name": "table-allgui",
+            "kind": "module",
+            "language": "c",
+            "loc": 1286,
+            "file": "gnucash/register/register-core/table-allgui.c"
+          },
+          {
+            "id": "gnucash/register/register-core/gtable.c",
+            "name": "gtable",
+            "kind": "module",
+            "language": "c",
+            "loc": 108,
+            "file": "gnucash/register/register-core/gtable.c"
+          },
+          {
+            "id": "gnucash/register/register-core/checkboxcell.c",
+            "name": "checkboxcell",
+            "kind": "module",
+            "language": "c",
+            "loc": 58,
+            "file": "gnucash/register/register-core/checkboxcell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/cell-factory.c",
+            "name": "cell-factory",
+            "kind": "module",
+            "language": "c",
+            "loc": 62,
+            "file": "gnucash/register/register-core/cell-factory.c"
+          },
+          {
+            "id": "gnucash/register/register-core/register-common.c",
+            "name": "register-common",
+            "kind": "module",
+            "language": "c",
+            "loc": 56,
+            "file": "gnucash/register/register-core/register-common.c"
+          },
+          {
+            "id": "gnucash/register/register-core/table-control.c",
+            "name": "table-control",
+            "kind": "module",
+            "language": "c",
+            "loc": 21,
+            "file": "gnucash/register/register-core/table-control.c"
+          },
+          {
+            "id": "gnucash/register/register-core/quickfillcell.c",
+            "name": "quickfillcell",
+            "kind": "module",
+            "language": "c",
+            "loc": 227,
+            "file": "gnucash/register/register-core/quickfillcell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/formulacell.c",
+            "name": "formulacell",
+            "kind": "module",
+            "language": "c",
+            "loc": 113,
+            "file": "gnucash/register/register-core/formulacell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/doclinkcell.c",
+            "name": "doclinkcell",
+            "kind": "module",
+            "language": "c",
+            "loc": 188,
+            "file": "gnucash/register/register-core/doclinkcell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/table-model.c",
+            "name": "table-model",
+            "kind": "module",
+            "language": "c",
+            "loc": 409,
+            "file": "gnucash/register/register-core/table-model.c"
+          },
+          {
+            "id": "gnucash/register/register-core/pricecell.c",
+            "name": "pricecell",
+            "kind": "module",
+            "language": "c",
+            "loc": 199,
+            "file": "gnucash/register/register-core/pricecell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/numcell.c",
+            "name": "numcell",
+            "kind": "module",
+            "language": "c",
+            "loc": 150,
+            "file": "gnucash/register/register-core/numcell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/table-layout.c",
+            "name": "table-layout",
+            "kind": "module",
+            "language": "c",
+            "loc": 304,
+            "file": "gnucash/register/register-core/table-layout.c"
+          },
+          {
+            "id": "gnucash/register/register-core/basiccell.c",
+            "name": "basiccell",
+            "kind": "module",
+            "language": "c",
+            "loc": 236,
+            "file": "gnucash/register/register-core/basiccell.c"
+          },
+          {
+            "id": "gnucash/register/register-core/cellblock.c",
+            "name": "cellblock",
+            "kind": "module",
+            "language": "c",
+            "loc": 126,
+            "file": "gnucash/register/register-core/cellblock.c"
+          },
+          {
+            "id": "gnucash/register/register-gnome/pricecell-gnome.c",
+            "name": "pricecell-gnome",
+            "kind": "module",
+            "language": "c",
+            "loc": 101,
+            "file": "gnucash/register/register-gnome/pricecell-gnome.c"
+          },
+          {
+            "id": "gnucash/register/register-gnome/formulacell-gnome.c",
+            "name": "formulacell-gnome",
+            "kind": "module",
+            "language": "c",
+            "loc": 60,
+            "file": "gnucash/register/register-gnome/formulacell-gnome.c"
+          },
+          {
+            "id": "gnucash/register/register-gnome/gnucash-sheet.c",
+            "name": "gnucash-sheet",
+            "kind": "module",
+            "language": "c",
+            "loc": 1773,
+            "file": "gnucash/register/register-gnome/gnucash-sheet.c"
+          },
+          {
+            "id": "gnucash/register/register-gnome/gnucash-cursor.c",
+            "name": "gnucash-cursor",
+            "kind": "module",
+            "language": "c",
+            "loc": 194,
+            "file": "gnucash/register/register-gnome/gnucash-cursor.c"
+          }
+        ]
+      },
+      {
+        "id": "dom:reports",
+        "name": "Reports",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "gnucash/report/gnc-report.cpp",
+            "name": "gnc-report",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 322,
+            "file": "gnucash/report/gnc-report.cpp"
+          },
+          {
+            "id": "gnucash/report/gnc-report.h",
+            "name": "gnc-report",
+            "kind": "module",
+            "language": "h",
+            "loc": 21,
+            "file": "gnucash/report/gnc-report.h"
+          },
+          {
+            "id": "gnucash/report/eguile.scm",
+            "name": "eguile",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 149,
+            "file": "gnucash/report/eguile.scm"
+          },
+          {
+            "id": "gnucash/report/report-utilities.scm",
+            "name": "report-utilities",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 1190,
+            "file": "gnucash/report/report-utilities.scm"
+          },
+          {
+            "id": "gnucash/report/html-utilities.scm",
+            "name": "html-utilities",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 354,
+            "file": "gnucash/report/html-utilities.scm"
+          },
+          {
+            "id": "gnucash/report/html-table.scm",
+            "name": "html-table",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 470,
+            "file": "gnucash/report/html-table.scm"
+          },
+          {
+            "id": "gnucash/report/eguile-html-utilities.scm",
+            "name": "eguile-html-utilities",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 119,
+            "file": "gnucash/report/eguile-html-utilities.scm"
+          },
+          {
+            "id": "gnucash/report/html-chart.scm",
+            "name": "html-chart",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 495,
+            "file": "gnucash/report/html-chart.scm"
+          },
+          {
+            "id": "gnucash/report/trep-engine.scm",
+            "name": "trep-engine",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 2338,
+            "file": "gnucash/report/trep-engine.scm"
+          },
+          {
+            "id": "gnucash/report/report-register-hooks.scm",
+            "name": "report-register-hooks",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 57,
+            "file": "gnucash/report/report-register-hooks.scm"
+          },
+          {
+            "id": "gnucash/report/html-fonts.scm",
+            "name": "html-fonts",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 172,
+            "file": "gnucash/report/html-fonts.scm"
+          },
+          {
+            "id": "gnucash/report/report.scm",
+            "name": "report",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 122,
+            "file": "gnucash/report/report.scm"
+          },
+          {
+            "id": "gnucash/report/options-utilities.scm",
+            "name": "options-utilities",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 214,
+            "file": "gnucash/report/options-utilities.scm"
+          },
+          {
+            "id": "gnucash/report/commodity-utilities.scm",
+            "name": "commodity-utilities",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 825,
+            "file": "gnucash/report/commodity-utilities.scm"
+          },
+          {
+            "id": "gnucash/report/html-style-sheet.scm",
+            "name": "html-style-sheet",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 226,
+            "file": "gnucash/report/html-style-sheet.scm"
+          },
+          {
+            "id": "gnucash/report/html-style-info.scm",
+            "name": "html-style-info",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 296,
+            "file": "gnucash/report/html-style-info.scm"
+          },
+          {
+            "id": "gnucash/report/html-acct-table.scm",
+            "name": "html-acct-table",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 1008,
+            "file": "gnucash/report/html-acct-table.scm"
+          },
+          {
+            "id": "gnucash/report/report-core.scm",
+            "name": "report-core",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 846,
+            "file": "gnucash/report/report-core.scm"
+          },
+          {
+            "id": "gnucash/report/html-text.scm",
+            "name": "html-text",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 225,
+            "file": "gnucash/report/html-text.scm"
+          },
+          {
+            "id": "gnucash/report/html-document.scm",
+            "name": "html-document",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 326,
+            "file": "gnucash/report/html-document.scm"
+          }
+        ]
+      },
+      {
+        "id": "dom:import-export",
+        "name": "Import/Export",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "gnucash/import-export/csv-exp/gnc-plugin-csv-export.c",
+            "name": "gnc-plugin-csv-export",
+            "kind": "module",
+            "language": "c",
+            "loc": 85,
+            "file": "gnucash/import-export/csv-exp/gnc-plugin-csv-export.c"
+          },
+          {
+            "id": "gnucash/import-export/csv-exp/assistant-csv-export.c",
+            "name": "assistant-csv-export",
+            "kind": "module",
+            "language": "c",
+            "loc": 660,
+            "file": "gnucash/import-export/csv-exp/assistant-csv-export.c"
+          },
+          {
+            "id": "gnucash/import-export/bi-import/dialog-bi-import-helper.c",
+            "name": "dialog-bi-import-helper",
+            "kind": "module",
+            "language": "c",
+            "loc": 53,
+            "file": "gnucash/import-export/bi-import/dialog-bi-import-helper.c"
+          },
+          {
+            "id": "gnucash/import-export/bi-import/dialog-bi-import-gui.c",
+            "name": "dialog-bi-import-gui",
+            "kind": "module",
+            "language": "c",
+            "loc": 269,
+            "file": "gnucash/import-export/bi-import/dialog-bi-import-gui.c"
+          },
+          {
+            "id": "gnucash/import-export/bi-import/gnc-plugin-bi-import.c",
+            "name": "gnc-plugin-bi-import",
+            "kind": "module",
+            "language": "c",
+            "loc": 62,
+            "file": "gnucash/import-export/bi-import/gnc-plugin-bi-import.c"
+          },
+          {
+            "id": "gnucash/import-export/bi-import/dialog-bi-import.c",
+            "name": "dialog-bi-import",
+            "kind": "module",
+            "language": "c",
+            "loc": 710,
+            "file": "gnucash/import-export/bi-import/dialog-bi-import.c"
+          },
+          {
+            "id": "gnucash/import-export/ofx/gnc-plugin-ofx.c",
+            "name": "gnc-plugin-ofx",
+            "kind": "module",
+            "language": "c",
+            "loc": 59,
+            "file": "gnucash/import-export/ofx/gnc-plugin-ofx.c"
+          },
+          {
+            "id": "gnucash/import-export/ofx/gncmod-ofx-import.c",
+            "name": "gncmod-ofx-import",
+            "kind": "module",
+            "language": "c",
+            "loc": 31,
+            "file": "gnucash/import-export/ofx/gncmod-ofx-import.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-gwen-gui.c",
+            "name": "gnc-gwen-gui",
+            "kind": "module",
+            "language": "c",
+            "loc": 1219,
+            "file": "gnucash/import-export/aqb/gnc-gwen-gui.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-ab-gettrans.c",
+            "name": "gnc-ab-gettrans",
+            "kind": "module",
+            "language": "c",
+            "loc": 146,
+            "file": "gnucash/import-export/aqb/gnc-ab-gettrans.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-ab-getbalance.c",
+            "name": "gnc-ab-getbalance",
+            "kind": "module",
+            "language": "c",
+            "loc": 71,
+            "file": "gnucash/import-export/aqb/gnc-ab-getbalance.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-file-aqb-import.c",
+            "name": "gnc-file-aqb-import",
+            "kind": "module",
+            "language": "c",
+            "loc": 92,
+            "file": "gnucash/import-export/aqb/gnc-file-aqb-import.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-ab-utils.c",
+            "name": "gnc-ab-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 947,
+            "file": "gnucash/import-export/aqb/gnc-ab-utils.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/dialog-ab-select-imexporter.c",
+            "name": "dialog-ab-select-imexporter",
+            "kind": "module",
+            "language": "c",
+            "loc": 214,
+            "file": "gnucash/import-export/aqb/dialog-ab-select-imexporter.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/dialog-ab-daterange.c",
+            "name": "dialog-ab-daterange",
+            "kind": "module",
+            "language": "c",
+            "loc": 89,
+            "file": "gnucash/import-export/aqb/dialog-ab-daterange.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-plugin-aqbanking.c",
+            "name": "gnc-plugin-aqbanking",
+            "kind": "module",
+            "language": "c",
+            "loc": 432,
+            "file": "gnucash/import-export/aqb/gnc-plugin-aqbanking.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/dialog-ab-trans.c",
+            "name": "dialog-ab-trans",
+            "kind": "module",
+            "language": "c",
+            "loc": 1011,
+            "file": "gnucash/import-export/aqb/dialog-ab-trans.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-ab-kvp.c",
+            "name": "gnc-ab-kvp",
+            "kind": "module",
+            "language": "c",
+            "loc": 74,
+            "file": "gnucash/import-export/aqb/gnc-ab-kvp.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/gnc-flicker-gui.c",
+            "name": "gnc-flicker-gui",
+            "kind": "module",
+            "language": "c",
+            "loc": 293,
+            "file": "gnucash/import-export/aqb/gnc-flicker-gui.c"
+          },
+          {
+            "id": "gnucash/import-export/aqb/assistant-ab-initial.c",
+            "name": "assistant-ab-initial",
+            "kind": "module",
+            "language": "c",
+            "loc": 579,
+            "file": "gnucash/import-export/aqb/assistant-ab-initial.c"
+          }
+        ]
+      },
+      {
+        "id": "dom:bindings",
+        "name": "Bindings",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "bindings/guile/gnc-guile-bindings.c",
+            "name": "gnc-guile-bindings",
+            "kind": "module",
+            "language": "c",
+            "loc": 15,
+            "file": "bindings/guile/gnc-guile-bindings.c"
+          },
+          {
+            "id": "bindings/guile/gnc-helpers.c",
+            "name": "gnc-helpers",
+            "kind": "module",
+            "language": "c",
+            "loc": 41,
+            "file": "bindings/guile/gnc-helpers.c"
+          },
+          {
+            "id": "bindings/guile/glib-guile.c",
+            "name": "glib-guile",
+            "kind": "module",
+            "language": "c",
+            "loc": 98,
+            "file": "bindings/guile/glib-guile.c"
+          },
+          {
+            "id": "bindings/guile/gnc-guile-utils.c",
+            "name": "gnc-guile-utils",
+            "kind": "module",
+            "language": "c",
+            "loc": 153,
+            "file": "bindings/guile/gnc-guile-utils.c"
+          },
+          {
+            "id": "bindings/python/sqlite3test.c",
+            "name": "sqlite3test",
+            "kind": "module",
+            "language": "c",
+            "loc": 18,
+            "file": "bindings/python/sqlite3test.c"
+          },
+          {
+            "id": "bindings/guile/gnc-kvp-guile.cpp",
+            "name": "gnc-kvp-guile",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 128,
+            "file": "bindings/guile/gnc-kvp-guile.cpp"
+          },
+          {
+            "id": "bindings/guile/gnc-engine-guile.cpp",
+            "name": "gnc-engine-guile",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 1402,
+            "file": "bindings/guile/gnc-engine-guile.cpp"
+          },
+          {
+            "id": "bindings/guile/test/test-scm-query-string.cpp",
+            "name": "test-scm-query-string",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 81,
+            "file": "bindings/guile/test/test-scm-query-string.cpp"
+          },
+          {
+            "id": "bindings/guile/test/test-print-queries.cpp",
+            "name": "test-print-queries",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 52,
+            "file": "bindings/guile/test/test-print-queries.cpp"
+          },
+          {
+            "id": "bindings/guile/test/test-scm-query.cpp",
+            "name": "test-scm-query",
+            "kind": "module",
+            "language": "cpp",
+            "loc": 56,
+            "file": "bindings/guile/test/test-scm-query.cpp"
+          },
+          {
+            "id": "bindings/guile/glib-guile.h",
+            "name": "glib-guile",
+            "kind": "module",
+            "language": "h",
+            "loc": 9,
+            "file": "bindings/guile/glib-guile.h"
+          },
+          {
+            "id": "bindings/guile/gnc-guile-utils.h",
+            "name": "gnc-guile-utils",
+            "kind": "module",
+            "language": "h",
+            "loc": 12,
+            "file": "bindings/guile/gnc-guile-utils.h"
+          },
+          {
+            "id": "bindings/guile/gnc-helpers.h",
+            "name": "gnc-helpers",
+            "kind": "module",
+            "language": "h",
+            "loc": 5,
+            "file": "bindings/guile/gnc-helpers.h"
+          },
+          {
+            "id": "bindings/guile/gnc-kvp-guile.h",
+            "name": "gnc-kvp-guile",
+            "kind": "module",
+            "language": "h",
+            "loc": 6,
+            "file": "bindings/guile/gnc-kvp-guile.h"
+          },
+          {
+            "id": "bindings/guile/gnc-engine-guile.h",
+            "name": "gnc-engine-guile",
+            "kind": "module",
+            "language": "h",
+            "loc": 21,
+            "file": "bindings/guile/gnc-engine-guile.h"
+          },
+          {
+            "id": "bindings/guile/options.scm",
+            "name": "options",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 369,
+            "file": "bindings/guile/options.scm"
+          },
+          {
+            "id": "bindings/guile/date-utilities.scm",
+            "name": "date-utilities",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 781,
+            "file": "bindings/guile/date-utilities.scm"
+          },
+          {
+            "id": "bindings/guile/c-interface.scm",
+            "name": "c-interface",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 73,
+            "file": "bindings/guile/c-interface.scm"
+          },
+          {
+            "id": "bindings/guile/business-core.scm",
+            "name": "business-core",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 121,
+            "file": "bindings/guile/business-core.scm"
+          },
+          {
+            "id": "bindings/guile/core-utils.scm",
+            "name": "core-utils",
+            "kind": "module",
+            "language": "scheme",
+            "loc": 109,
+            "file": "bindings/guile/core-utils.scm"
+          }
+        ]
+      },
+      {
+        "id": "dom:data",
+        "name": "Data Stores",
+        "kind": "domain",
+        "children": [
+          {
+            "id": "ds:XML_File",
+            "name": "XML File",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:SQL_Database",
+            "name": "SQL Database",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:Preferences",
+            "name": "Preferences",
+            "kind": "datastore"
+          },
+          {
+            "id": "ds:File_System",
+            "name": "File System",
+            "kind": "datastore"
+          }
+        ]
+      }
+    ]
+  },
+  "edges": [
+    {
+      "source": "doc/tip_of_the_day.list.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/core-utils/binreloc.c",
+      "target": "ds:File_System",
+      "kind": "read"
+    },
+    {
+      "source": "libgnucash/core-utils/gnc-gkeyfile-utils.c",
+      "target": "ds:File_System",
+      "kind": "read"
+    },
+    {
+      "source": "libgnucash/engine/ScrubBusiness.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncTaxTable.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncInvoice.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncEmployee.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncBillTerm.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/engine-helpers.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncOwner.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncOrder.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncAddress.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncEntry.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncCustomer.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gncVendor.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/gnc-accounting-period.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "libgnucash/engine/gncJob.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/gnc-prefs-utils.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/gnc-prefs-utils.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "libgnucash/app-utils/gnc-entry-quickfill.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/QuickFill.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/gnc-addr-quickfill.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/gnc-exp-parser.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/gnc-sx-instance-model.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/app-utils/gfec.c",
+      "target": "ds:File_System",
+      "kind": "read"
+    },
+    {
+      "source": "libgnucash/core-utils/test/test-gnc-glib-utils.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "libgnucash/engine/test/utest-gnc-pricedb.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/gnc-split-reg.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/gnc-split-reg.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-invoice.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-invoice.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/gnc-plugin-business.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/gnc-plugin-business.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-sx-since-last-run.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-sx-since-last-run.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-order.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-order.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/business-urls.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/gnc-plugin-register.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/gnc-plugin-register.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-tax-info.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-tax-info.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-vendor.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-vendor.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-find-account.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-find-transactions.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-new-user.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-custom-report.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-custom-report.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-customer.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-customer.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-print-check.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-print-check.c",
+      "target": "ds:File_System",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-print-check.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-sx-editor.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-sx-editor.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/gnc-plugin-budget.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-billterms.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/reconcile-view.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/reconcile-view.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-doclink.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-doclink.c",
+      "target": "ds:File_System",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-doclink.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/business-gnome-utils.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-employee.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-employee.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/gnc-budget-view.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/gnc-budget-view.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-lot-viewer.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-lot-viewer.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-payment.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-payment.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-fincalc.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/gnc-plugin-basic-commands.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-progress.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-job.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-job.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-imap-editor.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-imap-editor.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome/dialog-price-editor.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome/dialog-price-editor.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome-search/dialog-search.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-search/dialog-search.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome-search/search-core-utils.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-search/search-account.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-search/search-core-type.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/python/gncmod-python.c",
+      "target": "ds:File_System",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-commodity-edit.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-tree-view.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-tree-view.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome-utils/dialog-account.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/dialog-account.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-plugin-menu-additions.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-report-combo.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-date-format.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-tree-model-price.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-dense-cal.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/dialog-tax-table.c",
+      "target": "ds:Preferences",
+      "kind": "read"
+    },
+    {
+      "source": "gnucash/gnome-utils/dialog-query-view.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    },
+    {
+      "source": "gnucash/gnome-utils/gnc-plugin-file-history.c",
+      "target": "ds:SQL_Database",
+      "kind": "write"
+    }
+  ],
+  "entryPoints": [
+    "bindings/python/gnucash_core.py"
+  ],
+  "deadEnds": [],
+  "observations": [
+    "Core engine (libgnucash/engine) is the largest domain with ~108 files",
+    "Backend supports multiple storage formats: XML (native), SQL (SQLite/PostgreSQL/MySQL)",
+    "GUI layer (gnucash/gnome) has highest cyclomatic complexity in several files",
+    "Scheme used for reports (~80 files) creates contributor barrier",
+    "SWIG bindings enable Python/Scheme scripting of core engine",
+    "Register widget (gnucash/register) is complex spreadsheet-like UI component",
+    "Import/export supports multiple formats: CSV, QIF, OFX, AQBanking"
+  ],
+  "flows": [
+    {
+      "name": "Open Account File",
+      "persona": "User",
+      "description": "User opens existing GnuCash account file",
+      "steps": [
+        {
+          "label": "User clicks File > Open",
+          "nodes": [
+            "gnucash/gnome/gnc-main-window.cpp"
+          ]
+        },
+        {
+          "label": "File dialog shown",
+          "nodes": [
+            "gnucash/gnome-utils/gnc-file.c"
+          ]
+        },
+        {
+          "label": "Backend loads XML/SQL",
+          "nodes": [
+            "libgnucash/backend/xml/gnc-xml-backend.cpp"
+          ]
+        },
+        {
+          "label": "Engine creates Book/Account objects",
+          "nodes": [
+            "libgnucash/engine/Account.cpp"
+          ]
+        },
+        {
+          "label": "GUI displays account tree",
+          "nodes": [
+            "gnucash/gnome/gnc-plugin-page-account-tree.cpp"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Enter Transaction",
+      "persona": "User",
+      "description": "User enters a financial transaction in register",
+      "steps": [
+        {
+          "label": "User selects account",
+          "nodes": [
+            "gnucash/gnome/gnc-plugin-page-account-tree.cpp"
+          ]
+        },
+        {
+          "label": "Register widget opens",
+          "nodes": [
+            "gnucash/register/ledger-core/split-register.c"
+          ]
+        },
+        {
+          "label": "User enters transaction data",
+          "nodes": [
+            "gnucash/register/ledger-core/split-register-control.cpp"
+          ]
+        },
+        {
+          "label": "Engine creates Transaction/Split",
+          "nodes": [
+            "libgnucash/engine/Transaction.cpp"
+          ]
+        },
+        {
+          "label": "Backend saves to file",
+          "nodes": [
+            "libgnucash/backend/xml/gnc-xml-backend.cpp"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Generate Report",
+      "persona": "User",
+      "description": "User generates a financial report (balance sheet, income statement)",
+      "steps": [
+        {
+          "label": "User selects Reports menu",
+          "nodes": [
+            "gnucash/gnome/gnc-plugin-page-report.cpp"
+          ]
+        },
+        {
+          "label": "Scheme report engine runs",
+          "nodes": [
+            "gnucash/report/report.scm"
+          ]
+        },
+        {
+          "label": "Report queries engine data",
+          "nodes": [
+            "libgnucash/engine/Account.cpp"
+          ]
+        },
+        {
+          "label": "HTML generated",
+          "nodes": [
+            "gnucash/report/html-document.scm"
+          ]
+        },
+        {
+          "label": "Report displayed",
+          "nodes": [
+            "gnucash/html/gnc-html.c"
+          ]
+        }
+      ]
+    }
+  ]
+}

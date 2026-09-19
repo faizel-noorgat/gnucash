@@ -1,0 +1,51 @@
+flowchart TD
+    %% Open Account File flow - primary persona walkthrough
+    USER(("User")):::persona
+
+    subgraph "Step 1: User Action"
+        A1["User clicks File > Open"]
+    end
+
+    subgraph "Step 2: File Dialog"
+        A2["gnc-file.c<br/>show_session_error()<br/>gnc_post_file_open()"]
+        A3["GTK File Chooser"]
+    end
+
+    subgraph "Step 3: Backend Load"
+        A4["gnc-xml-backend.cpp<br/>or gnc-sql-backend.cpp"]
+        A5["Parse XML / Query SQL"]
+    end
+
+    subgraph "Step 4: Engine Create"
+        A6["Account.cpp<br/>Transaction.cpp<br/>Split.cpp"]
+        A7["QofBook created<br/>Objects populated"]
+    end
+
+    subgraph "Step 5: GUI Display"
+        A8["gnc-plugin-page-account-tree.cpp"]
+        A9["Account tree rendered"]
+    end
+
+    %% Data stores
+    XML_FILE[("XML File<br/>.gnucash")]:::datastore
+    SQL_DB[("SQL Database<br/>SQLite/PG/MySQL")]:::datastore
+    PREFS[("Preferences<br/>GSettings")]:::datastore
+
+    %% Flow
+    USER --> A1
+    A1 --> A2
+    A2 --> A3
+    A2 -->|read| PREFS
+    A3 -->|select file| A4
+    A4 -->|read| XML_FILE
+    A4 -->|read| SQL_DB
+    A4 --> A5
+    A5 --> A6
+    A6 --> A7
+    A7 --> A8
+    A8 --> A9
+
+    %% Styles
+    classDef persona fill:#ff6b6b,stroke:#c92a2a,stroke-width:3px,color:#fff
+    classDef datastore fill:#fff4e1,stroke:#f57c00,stroke-width:2px
+    classDef step fill:#e1f5ff,stroke:#0288d1,stroke-width:2px
