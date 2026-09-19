@@ -73,6 +73,22 @@ DROP FUNCTION IF EXISTS get_current_entity_id();
 # disable its own RLS, so ownership is itself a bypass. It must not have
 # BYPASSRLS for the same reason, and is NOLOGIN here so the migration never
 # invents a credential; deployments grant LOGIN and a password out of band.
+#
+# The `ALTER` re-asserts the four attributes that make the role safe to connect
+# as, and deliberately **does not include NOLOGIN**. Roles are cluster-scoped
+# while databases are not, so this statement runs once per database: a
+# `NOLOGIN` here revoked the credential across the whole cluster every time a
+# fresh database was migrated. `pytest` creates one per run, so running the test
+# suite silently locked the running application out of a development or
+# production database sharing that cluster. Verified, not theorised: grant
+# LOGIN, run `pytest tests/rls/test_rls_provisioning.py`, and `rolcanlogin` is
+# back to false.
+#
+# Dropping it weakens nothing. LOGIN is not a bypass - it is the ability to
+# connect at all, and a connected `app_user` is still NOSUPERUSER, NOBYPASSRLS,
+# owns nothing, and is bound by all 57 policies. The four attributes that do
+# matter are still re-asserted on every database, so a role that drifted out of
+# them cannot stay that way.
 CREATE_ROLE = """
 DO $$
 BEGIN
@@ -82,7 +98,7 @@ BEGIN
 END
 $$;
 
-ALTER ROLE app_user NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOLOGIN;
+ALTER ROLE app_user NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
 """
 
 # Grants are deliberately on ALL tables in the schema rather than only the

@@ -3,22 +3,22 @@
 The policies in this app are only worth the role that connects to them. A
 superuser bypasses row-level security *even against a table with* ``FORCE ROW
 LEVEL SECURITY`` set, and a role with ``BYPASSRLS`` does the same - so a
-deployment that connects as either has a complete, correct, entirely advisory
-set of policies and no isolation whatsoever. That is not a hypothetical: this
-project's own settings point every environment at the ``postgres`` superuser,
-because the runtime connection and the migration connection are the same
-``DATABASES['default']`` entry.
+deployment whose runtime connection names either has a complete, correct,
+entirely advisory set of policies and no isolation whatsoever.
 
-Checking it in code rather than in a comment means the gap is reported by
-``manage.py check``, which every deployment already runs, instead of being
-rediscovered by whoever next reads the settings file.
+This check inspects exactly one connection: the ``default`` alias, because that
+is the runtime one. It is deliberately not a per-alias check even though it
+carries ``Tags.database``. The ``deploy`` alias *is* expected to be able to
+bypass - see ``split_databases`` in ``config/settings/base.py`` - because
+FORCE ROW LEVEL SECURITY binds the table owner too, so nothing else can run the
+cross-tenant backfills. Iterating every alias would report the correct
+configuration as a fault, which is how a check gets switched off.
 
-Severity is a **warning**, not an error, on purpose. Migrations genuinely do
-need the owning role - they create the policies - and with a single
-``DATABASES['default']`` the deploy connection is the same one. An error here
-would block ``manage.py migrate`` on exactly the deployments that need to run
-it. The fix is to split the two connections, which is a deployment decision,
-not something a check should force.
+Severity is a **warning**, not an error. ``manage.py migrate`` runs system
+checks, and a deployment that still has one privileged alias needs to be able
+to run that command to reach the split. An error here would block the fix on
+exactly the deployments that need it, and the condition it reports is a
+deployment decision rather than a defect in the code being checked.
 """
 
 from django.conf import settings
@@ -27,12 +27,15 @@ from django.core.checks import Tags, Warning, register
 
 @register(Tags.database)
 def runtime_connection_can_bypass_rls(app_configs, **kwargs):
-    """Warn when the configured connection can see through every policy."""
+    """Warn when the runtime connection can see through every policy."""
     if not getattr(settings, "RLS_ENABLED", False):
         # RLS is off in this environment; there is nothing to bypass.
         return []
 
     from django.db import connection
+
+    alias = connection.alias
+    deploy_alias = getattr(settings, "DEPLOY_DB_ALIAS", "deploy")
 
     try:
         with connection.cursor() as cursor:
@@ -58,7 +61,7 @@ def runtime_connection_can_bypass_rls(app_configs, **kwargs):
     reason = "a superuser" if is_superuser else "granted BYPASSRLS"
     return [
         Warning(
-            f"The database connection for this environment is {reason} "
+            f"The runtime database connection (alias {alias!r}) is {reason} "
             f"(role {role!r}), so every row-level security policy is advisory "
             f"and tenant isolation is not enforced.",
             hint=(
@@ -66,7 +69,9 @@ def runtime_connection_can_bypass_rls(app_configs, **kwargs):
                 "has no BYPASSRLS - 'app_user', created by common/rls "
                 "migrations. Deployments grant it LOGIN and a password out of "
                 "band. Migrations still need an owning role, so the runtime "
-                "and deploy connections have to be separate DATABASES entries."
+                f"and deploy connections are separate DATABASES entries; the "
+                f"{deploy_alias!r} alias carries the owning credential and only "
+                f"'manage.py migrate --database={deploy_alias}' uses it."
             ),
             id="rls.W001",
         )

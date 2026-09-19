@@ -61,8 +61,10 @@ pip install -e ".[dev]"
 cp .env.example .env
 # Edit .env with your database credentials
 
-# Run migrations
-python manage.py migrate
+# Run migrations. Note the alias: migrations need the owning role and cannot
+# run on `default`, which is the RLS-bound runtime role.
+# See "Runtime and deploy database roles" below.
+python manage.py migrate --database=deploy
 
 # Create superuser
 python manage.py createsuperuser
@@ -80,9 +82,65 @@ docker compose up -d
 # View logs
 docker compose logs -f web
 
-# Run migrations
-docker compose exec web python manage.py migrate
+# Run migrations (the owning role; see "Runtime and deploy database roles")
+docker compose exec web python manage.py migrate --database=deploy
 ```
+
+## Runtime and deploy database roles
+
+The application connects to PostgreSQL twice, with two different credentials
+against the same database. Which one a connection uses decides whether tenant
+isolation is enforced or merely declared.
+
+| Alias | Role | Used by | Bound by RLS |
+|---|---|---|---|
+| `default` | `app_user` | every web and Celery query | yes |
+| `deploy` | the owning role | `manage.py migrate --database=deploy` | no, and it cannot be |
+
+A superuser - and a role with `BYPASSRLS` - sees through row-level security
+even against a table carrying `FORCE ROW LEVEL SECURITY`. A runtime connection
+naming either leaves the policies correct, reviewed, thoroughly tested and
+enforcing nothing. `manage.py check` reports that as `rls.W001`.
+
+Migrations run as the owning role because they have to. `FORCE ROW LEVEL
+SECURITY` binds the table owner as well as everyone else, and the tenant
+backfills in `apps/*/migrations` set a child's `tenant_id` from its parent with
+no tenant context at all. A role the policies apply to would not fail on those
+statements - it would update zero rows, in silence.
+
+`app_user` is created by `common/rls/migrations/0001` with `NOLOGIN`, because a
+provisioning migration must never invent a credential. Grant it one out of
+band. The role does not exist until the first migration, and that migration
+re-asserts only the four attributes that make the role safe to connect as -
+`NOSUPERUSER`, `NOBYPASSRLS`, `NOCREATEDB`, `NOCREATEROLE` - never `LOGIN`,
+which is the deployment's to grant and then stays granted. (Roles are
+cluster-scoped while databases are not, so a `NOLOGIN` in that statement would
+have revoked the credential cluster-wide every time a fresh database was
+migrated, which is every `pytest` run.)
+
+### A fresh development database
+
+```bash
+createdb gnucash_dev
+
+# 1. Migrate first, as the owning role. This is also what creates app_user.
+python manage.py migrate --database=deploy
+
+# 2. Grant the runtime role a credential. The role does not exist before step 1,
+#    and later migrations do not undo this.
+psql -d gnucash_dev -c "ALTER ROLE app_user LOGIN PASSWORD 'app_user'"
+
+# 3. Confirm the runtime connection is actually bound by the policies.
+python manage.py check          # must print no rls.W001
+```
+
+Development reads `DB_USER`, `DB_PASSWORD`, `DB_OWNER_USER` and
+`DB_OWNER_PASSWORD` (defaults: `app_user` and `postgres`); production takes
+`DATABASE_URL` for the runtime role and `DEPLOY_DATABASE_URL` for the owning
+one. `config/settings/test.py` is the one environment that cannot split the two
+- the test runner migrates through the connection the tests then run as - so it
+stays on a single privileged alias and the RLS suite assumes `app_user`
+per test with `SET LOCAL ROLE`.
 
 ## Testing
 

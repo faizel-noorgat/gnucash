@@ -29,6 +29,15 @@
 -- needs it to exist before the application can connect at all. Migration 0001
 -- is idempotent over this (`IF NOT EXISTS`, then `ALTER ROLE`), so running both
 -- is safe in either order.
+--
+-- The credential is granted here rather than in the migration because a
+-- provisioning migration must never invent one, and granted here rather than
+-- in the web service's start command because the role has to exist first.
+-- Granting it is idempotent and nothing later revokes it: migration 0001
+-- re-asserts NOSUPERUSER/NOBYPASSRLS/NOCREATEDB/NOCREATEROLE, deliberately not
+-- LOGIN.
+--
+--     ALTER ROLE app_user LOGIN PASSWORD '<runtime password>';
 
 DO $$
 BEGIN

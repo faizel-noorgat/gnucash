@@ -1,5 +1,21 @@
 # Docker Compose configuration for GnuCash Reimagined
 # Development environment with PostgreSQL, Redis, and application services
+#
+# Two database roles are in play. The application runs as `app_user`, which the
+# RLS policies bind; migrations run as `postgres`, which owns the tables and is
+# the only role that can write across tenants (FORCE ROW LEVEL SECURITY binds
+# the owner too). See README.md, "Runtime and deploy database roles".
+#
+# ONE-TIME STEP, after the first `docker compose up`: `app_user` is created by
+# migration 0001 with NOLOGIN, because a provisioning migration must never
+# invent a credential.
+#
+#   docker compose exec db psql -U postgres -d gnucash_dev \
+#     -c "ALTER ROLE app_user LOGIN PASSWORD 'app_user'"
+#
+# Until that runs, `web` and the Celery services cannot connect. It survives
+# `docker compose restart`, later `migrate` runs and test runs; it is needed
+# once per cluster.
 
 version: '3.8'
 
@@ -39,11 +55,17 @@ services:
       context: .
       target: development
     command: >
-      sh -c "python manage.py migrate &&
+      sh -c "python manage.py migrate --database=deploy &&
              python manage.py runserver 0.0.0.0:8000"
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.development
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/gnucash_dev
+      - DB_NAME=gnucash_dev
+      - DB_USER=app_user
+      - DB_PASSWORD=app_user
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_OWNER_USER=postgres
+      - DB_OWNER_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379/0
       - DEBUG=True
     ports:
@@ -65,7 +87,13 @@ services:
     command: celery -A config.celery worker -l INFO
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.development
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/gnucash_dev
+      - DB_NAME=gnucash_dev
+      - DB_USER=app_user
+      - DB_PASSWORD=app_user
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_OWNER_USER=postgres
+      - DB_OWNER_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - .:/app
@@ -83,7 +111,13 @@ services:
     command: celery -A config.celery beat -l INFO
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.development
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/gnucash_dev
+      - DB_NAME=gnucash_dev
+      - DB_USER=app_user
+      - DB_PASSWORD=app_user
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_OWNER_USER=postgres
+      - DB_OWNER_PASSWORD=postgres
       - REDIS_URL=redis://redis:6379/0
     volumes:
       - .:/app

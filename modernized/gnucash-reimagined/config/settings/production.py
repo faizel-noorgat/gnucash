@@ -11,7 +11,11 @@ env = environ.Env(
     DEBUG=(bool, False),
     ALLOWED_HOSTS=(list, []),
     SECRET_KEY=(str, ""),
-    DATABASE_URL=(str, "postgres://postgres:postgres@localhost:5432/gnucash_prod"),
+    DATABASE_URL=(str, "postgres://app_user:app_user@localhost:5432/gnucash_prod"),
+    DEPLOY_DATABASE_URL=(
+        str,
+        "postgres://postgres:postgres@localhost:5432/gnucash_prod",
+    ),
     REDIS_URL=(str, "redis://localhost:6379/0"),
 )
 
@@ -25,10 +29,18 @@ SECRET_KEY = env("SECRET_KEY")
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS")
 
-# Database - PostgreSQL for production
-DATABASES = {
-    "default": env.db("DATABASE_URL"),
-}
+# Database - PostgreSQL for production, split into a runtime role and an owning
+# role. See ``split_databases`` in base.py for why there are two.
+#
+# ``DATABASE_URL`` must name a role the RLS policies bind - a superuser or a
+# BYPASSRLS role here makes every policy advisory, which is what ``rls.W001``
+# reports at startup. ``DEPLOY_DATABASE_URL`` names the owning role and is used
+# only by ``manage.py migrate --database=deploy``; nothing on the request path
+# ever connects with it.
+DATABASES = split_databases(  # noqa: F405
+    env.db("DATABASE_URL"),
+    env.db("DEPLOY_DATABASE_URL"),
+)
 
 # Security settings
 SECURE_BROWSER_XSS_FILTER = True

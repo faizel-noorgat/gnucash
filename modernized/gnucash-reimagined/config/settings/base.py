@@ -92,6 +92,49 @@ DATABASES = {
     }
 }
 
+# The application uses two credentials against one database, and which one a
+# connection uses is the difference between an enforced boundary and a
+# decorative one.
+#
+# ``default`` is the *runtime* connection. Every query the web and Celery
+# processes issue goes through it, so it has to name a role that row-level
+# security actually binds. A superuser - and a role with ``BYPASSRLS`` - sees
+# through every policy, FORCEd or not, which leaves the 51 policed tables with
+# correct, reviewed, thoroughly tested policies that nothing enforces. That was
+# true of every environment here until the two connections were split.
+#
+# ``deploy`` is the *owning* connection, and only ``manage.py migrate
+# --database=deploy`` may use it. Migrations write rows across tenant
+# boundaries - the tenant backfills in ``apps/*/migrations`` set a child's
+# ``tenant_id`` from its parent with no tenant context at all - and FORCE ROW
+# LEVEL SECURITY binds the table owner too, so a role the policies apply to
+# cannot perform them. It would not fail: it would update zero rows, in
+# silence. The owning role is the one thing that can bypass, so it is kept off
+# the request path entirely and reached only by an explicit operator command.
+#
+# ``app_user`` is NOLOGIN as created by ``common/rls/migrations/0001``, because
+# a provisioning migration must never invent a credential. Grant it LOGIN and a
+# password once, after the first migration - the role does not exist before
+# then, and that migration re-asserts only the attributes that make the role
+# safe to connect as, not LOGIN. The grant survives later migrations and test
+# runs. See README.md, "Runtime and deploy database roles".
+DEPLOY_DB_ALIAS = "deploy"
+
+
+def split_databases(runtime, owner_credentials):
+    """Return ``DATABASES`` with a runtime alias and an owning deploy alias.
+
+    Both aliases address the same database: engine, host, port, name and
+    options are all taken from ``runtime``, so the two cannot drift into
+    pointing at different servers. Only the credential differs, which is the
+    entire point. ``owner_credentials`` supplies just the keys that change -
+    normally ``USER`` and ``PASSWORD``.
+    """
+    return {
+        "default": runtime,
+        DEPLOY_DB_ALIAS: {**runtime, **owner_credentials},
+    }
+
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 AUTH_PASSWORD_VALIDATORS = [
