@@ -142,3 +142,33 @@ Format:
 
 **Fix:** Before diagnosing, re-run the same command once and compare. If the numbers move, suspect a test database left behind by a previously-aborted run (here `gnucash_test`, dropped by pytest on a clean exit and not on an abort). Do not create the test database by hand to "fix" it — that is what causes this state. Confirm determinism twice before believing any failure count.
 
+---
+
+## LL-014 — A privilege level above the mechanism makes a test of that mechanism vacuous
+
+**Trigger:** Testing a security boundary — row-level security, file permissions, a sandbox — through the connection or user the test suite happens to run as.
+
+**Symptom:** The test passes and proves nothing. PostgreSQL's row-level security is bypassed by **superusers regardless of `FORCE ROW LEVEL SECURITY`**, which exists precisely to defeat the *owner* bypass but does not touch superuser status. Django's test connection here is the `postgres` superuser, so every RLS assertion made through it — `relrowsecurity` true, policies present, rows filtered — would have gone green even with no policy at all. The same shape appears with `BYPASSRLS` roles, `root` against file modes, and container capabilities.
+
+**Fix:** Establish the privilege the mechanism is meant to constrain *before* asserting. Here that is `SET LOCAL ROLE app_user` plus transaction-local GUCs, in a helper every test goes through, so the assertion is made from the position the policy actually governs. Confirm which bypasses exist by experiment against the real system rather than from documentation — the superuser behaviour was verified directly before any test relied on it. And note that setting the mechanism's *input* (here, the tenant context) is only half the job: the connecting role must also be one the mechanism applies to.
+
+---
+
+## LL-015 — A test harness that resets state in a `finally` can invalidate the measurement
+
+**Trigger:** A helper that sets some state, then unconditionally undoes it in a `finally`, used alongside state the caller set up itself.
+
+**Symptom:** Two probe results that were confidently wrong. A query helper reset the role in its `finally`, which silently clobbered a role the caller had set before calling it. Subsequent reads ran as the wrong role and returned results that looked like a policy failure — the opposite of the truth. Nothing errored; the numbers were simply from a different setup than the one believed to be in effect.
+
+**Fix:** Make the harness own the *whole* scope it resets, or reset nothing. Prefer a context manager covering setup and teardown of one coherent scope over a call-scoped `finally` that reaches outside its own frame. When a probe produces a surprising result, re-derive it with the setup inlined and visible before building anything on it — a measurement from an unknown configuration is not a measurement.
+
+---
+
+## LL-016 — A second, unexecuted definition of the same database object is a landmine
+
+**Trigger:** A bootstrap script (`init-db.sql`, a seed file, a hand-run snippet) that defines objects that migrations also define.
+
+**Symptom:** Whichever definition runs is the one that wins, and only one of them ever does. Here `docker/init-db.sql` declared two RLS helper functions as `RETURNS integer` against UUID columns; it was never executed on the development machine (docker is not installed), so the defect sat inert and the functions were absent rather than wrong. Worse, the obvious migration would have **failed** on any deployment that *had* run it: `CREATE OR REPLACE FUNCTION` cannot change a return type, so it raises `cannot change return type of existing function` — breaking upgrades on exactly the machines that most needed fixing.
+
+**Fix:** One definition, in the place that always runs — for schema, the migration graph. Where a bootstrap script must still exist, strip it to what genuinely cannot come from a migration and have it say why. Use `DROP FUNCTION IF EXISTS` before `CREATE` when a stale definition may exist, and verify the upgrade path by seeding the *old* definition into a scratch database and migrating over it, not by testing only the clean-install path.
+
