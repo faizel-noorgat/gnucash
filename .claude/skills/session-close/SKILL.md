@@ -120,7 +120,28 @@ Written only here — this is the one time `progress.md` is touched. Sync **Done
 - **Recurring pitfall** → append to `memory-bank/core/lessons-learned.md` as `LL-NNN — <one-line rule>`, followed by the trigger, the symptom, and the fix.
 - **Consequential decision** → append to **Decisions passed** in `current-state.md`; record an ADR under `docs/decisions/` when it changes architecture or a public interface.
 
-### 7. Validate the handoff, then archive
+### 7. Refresh the indexes
+
+The tree is in its final state for the day — index it now so the next session opens against a fresh index instead of paying for a cold walk.
+
+Code (jCodemunch):
+
+```
+index_folder { "path": ".", "incremental": true, "use_ai_summaries": true }
+embed_repo { "repo": "Gnucash/gnucash" }
+```
+
+Docs (jDocMunch):
+
+```
+index_local { "path": ".", "incremental": true, "use_ai_summaries": true, "use_embeddings": true }
+```
+
+Incremental only. A full re-index (`incremental: false`) is a deliberate act for a cold index or a parser upgrade, never a close-out step. `embed_repo` is separate from `index_folder` — the folder index has no embedding switch, so skipping it leaves new symbols unembedded and semantic search silently degraded.
+
+Report what changed, and flag the number if it is far larger than the session's actual edits. If either run reports low `embedding_coverage`, say so in the handoff rather than leaving the next session to discover it.
+
+### 8. Validate the handoff, then archive
 
 ```bash
 python3 .claude/scripts/session_scratchpad.py check-handoff \
@@ -133,7 +154,7 @@ python3 .claude/scripts/session_scratchpad.py archive-resolved \
 
 `archive-resolved` runs **only after** `check-handoff` passes. It moves resolved items to the archive, retains the newest 100 from the last 30 days, and rolls the session ID. Resolved items still referenced by unresolved items stay in live state.
 
-### 8. Confirm closure
+### 9. Confirm closure
 
 ```
 [SESSION CLOSED]
@@ -141,6 +162,7 @@ Status persisted: <status>
 Timestamp: <verified timestamp>
 Memory Bank updated: current-state.md, NOTES_NEXT_SESSION.md, progress.md
 Scratchpad: <N> unresolved, <M> archived
+Indexes: code <symbols> symbols / docs <sections> sections (<what changed>)
 Next session priority: <item 1 from NOTES_NEXT_SESSION.md>
 ```
 
