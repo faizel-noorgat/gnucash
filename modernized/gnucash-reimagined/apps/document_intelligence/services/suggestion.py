@@ -201,6 +201,49 @@ class LLMSuggester:
         )
 
 
+def get_ai_suggester() -> AISuggester:
+    """Factory function to get the configured AI suggester.
+
+    Dispatches on `settings.DOCUMENT_INTELLIGENCE` so no LLM vendor is
+    hard-wired into the orchestration code. `AI_SUGGESTER` names the internal
+    strategy; `AI_PROVIDER` (the documented settings key: "openai" |
+    "anthropic" | "mock") selects the vendor for the LLM-backed strategy.
+
+    Recognised `AI_SUGGESTER` values:
+        "mock" (default), "historical_mapping", "llm"
+
+    Unknown values fall back to the mock suggester with a warning rather than
+    raising, matching `services.storage.get_storage_client`.
+
+    Returns:
+        AISuggester instance. Suggestions only ever *propose* accounting
+        entries — they are never posted directly (BR-DI-009).
+    """
+    conf = settings.DOCUMENT_INTELLIGENCE
+
+    if not conf.get("AI_SUGGESTIONS_ENABLED", True):
+        return MockAISuggester()
+
+    suggester_name = conf.get("AI_SUGGESTER") or conf.get("AI_PROVIDER") or "mock"
+
+    if suggester_name == "mock":
+        return MockAISuggester()
+    elif suggester_name == "historical_mapping":
+        return HistoricalMappingSuggester()
+    elif suggester_name in ("llm", "openai", "anthropic"):
+        llm_provider = (
+            conf.get("LLM_PROVIDER", "openai")
+            if suggester_name == "llm"
+            else suggester_name
+        )
+        return LLMSuggester(llm_provider=llm_provider)
+    else:
+        logger.warning(
+            "Unknown AI suggester '%s', falling back to mock", suggester_name
+        )
+        return MockAISuggester()
+
+
 class SuggestionService:
     """Orchestrates AI suggestion generation.
 
@@ -215,28 +258,12 @@ class SuggestionService:
         Args:
             suggester: AI suggester to use. If None, uses configured default.
         """
-        self.suggester = suggester or self._get_default_suggester()
         self.conf = settings.DOCUMENT_INTELLIGENCE
+        self.suggester = suggester or self._get_default_suggester()
 
     def _get_default_suggester(self) -> AISuggester:
-        """Get default AI suggester from settings."""
-        if not self.conf.get("AI_SUGGESTIONS_ENABLED", True):
-            return MockAISuggester()
-
-        suggester_name = self.conf.get("AI_SUGGESTER", "mock")
-
-        if suggester_name == "mock":
-            return MockAISuggester()
-        elif suggester_name == "historical_mapping":
-            return HistoricalMappingSuggester()
-        elif suggester_name == "llm":
-            llm_provider = self.conf.get("LLM_PROVIDER", "openai")
-            return LLMSuggester(llm_provider=llm_provider)
-        else:
-            logger.warning(
-                "Unknown AI suggester '%s', falling back to mock", suggester_name
-            )
-            return MockAISuggester()
+        """Get default AI suggester from settings (see the factory)."""
+        return get_ai_suggester()
 
     def generate_suggestion(
         self,

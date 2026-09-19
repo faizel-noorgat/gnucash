@@ -35,9 +35,6 @@ dependencies = [
 
     # Date/time handling
     "python-dateutil>=2.8,<3.0",
-
-    # Decimal precision
-    "decimal-converter>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -85,6 +82,10 @@ packages = ["config", "apps", "common"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings.test"
+# Only the unified suite is collected. Without this, pytest walks the repo root
+# and also collects the round-one standalone service trees (identity-access/,
+# accounting-engine/, ...), whose modules import packages that no longer exist.
+testpaths = ["tests"]
 python_files = ["test_*.py", "tests.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
@@ -95,8 +96,11 @@ addopts = [
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "acceptance: marks tests as acceptance/behaviour-contract tests",
     "integration: marks tests as integration tests",
     "golden: marks tests as golden accounting tests",
+    "rule: marks tests as behaviour-rule contract tests",
+    "golden_dependency: marks tests gated on the golden accounting suite",
     "rls: marks tests as RLS-specific tests",
 ]
 

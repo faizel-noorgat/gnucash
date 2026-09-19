@@ -33,6 +33,7 @@ import uuid
 from decimal import Decimal
 from typing import Optional
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -146,7 +147,7 @@ class ReconciliationAuditLog(models.Model):
     old_status = models.CharField(max_length=20)
     new_status = models.CharField(max_length=20)
     changed_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -292,7 +293,7 @@ class BankStatement(models.Model):
 
     imported_at = models.DateTimeField(auto_now_add=True)
     imported_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -473,14 +474,14 @@ class BankReconciliation(models.Model):
     completed_at = models.DateTimeField(null=True, blank=True)
 
     started_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="started_reconciliations",
     )
     completed_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -43,7 +43,7 @@ from typing import Optional
 
 from django.db.models import Q
 
-from accounting.models import Commodity, ExchangeRate
+from apps.accounting.models import Commodity, ExchangeRate
 
 
 class FXService:

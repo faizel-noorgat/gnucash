@@ -198,9 +198,33 @@ class JournalEntry(models.Model):
         return f"JE-{self.num or self.guid}: {self.description[:50]}"
 
     def clean(self):
-        """Validate journal entry constraints."""
+        """
+        Validate journal entry constraints.
+
+        BR-BUS-001: Posting is one-way. An entry that is already posted cannot
+        be moved back to draft/unposted; correct it with a reversal or
+        correcting entry instead.
+        """
         if self.is_posted and self.status != JournalEntryStatus.POSTED:
             raise ValidationError("Posted journal entries must have status='posted'.")
+
+        # BR-BUS-001: Posting is one-way. Detect the posted -> unposted/draft
+        # transition by comparing against the persisted row. `_state.adding` is
+        # used rather than `pk` because `guid` carries a default, so `pk` is
+        # populated even for instances that were never saved.
+        if not self._state.adding:
+            was_posted = (
+                JournalEntry.objects.filter(pk=self.pk)
+                .values_list("is_posted", flat=True)
+                .first()
+            )
+            if was_posted and (
+                not self.is_posted or self.status == JournalEntryStatus.DRAFT
+            ):
+                raise ValidationError(
+                    "Cannot un-post a posted journal entry. "
+                    "Create a reversal or correcting entry instead."
+                )
 
     def save(self, *args, **kwargs):
         """Save with validation."""
@@ -229,32 +253,46 @@ class JournalEntry(models.Model):
 
         Accounting Semantics:
             For multi-currency transactions, imbalance is computed per-commodity.
-            Each commodity must sum to zero independently.
-            Trading accounts handle the cross-commodity balancing.
+            Each commodity must sum to zero independently. Separately, the sum of
+            all line `value` figures (which are always expressed in the
+            transaction currency) must be zero.
 
         Returns:
             True if balanced per commodity, False otherwise
+
+        Note:
+            The two checks MUST use separate accumulators. An earlier version
+            folded `amount` and `value` into one dict keyed by commodity, so a
+            line whose account commodity equalled the transaction currency
+            contributed twice to the same bucket. Two wrongs then cancelled:
+            a single line with amount +100 and value -100, with no offsetting
+            line at all, summed to zero and was reported balanced. Because
+            `is_balanced` gates JournalEntry.post() and
+            PostingService.post_journal_entry(), that allowed unbalanced
+            entries to be posted.
         """
-        lines = self.lines.all()
-
-        # Group by account commodity
         from collections import defaultdict
+
         commodity_totals = defaultdict(lambda: Decimal("0.00"))
+        value_total = Decimal("0.00")
 
-        for line in lines:
-            # Amount is in account's commodity
+        for line in self.lines.all():
+            # `amount` is denominated in the line's OWN account commodity, so it
+            # is bucketed per commodity.
             commodity_totals[line.account.commodity.mnemonic] += line.amount
-            # Value is in transaction currency
-            commodity_totals[self.transaction_currency.mnemonic] += line.value
+            # `value` is denominated in the transaction currency, which every
+            # line of this entry shares - so it is a single running total, not
+            # a per-commodity bucket.
+            value_total += line.value
 
-        # Check that each commodity sums to zero
-        # Note: Trading accounts handle the multi-currency imbalance internally
-        for commodity_code, total in commodity_totals.items():
+        # Each commodity must net to zero on its own.
+        for total in commodity_totals.values():
             # Allow for rounding tolerance (0.5 cents)
             if abs(total) > Decimal("0.005"):
                 return False
 
-        return True
+        # ...and the transaction-currency values must net to zero.
+        return abs(value_total) <= Decimal("0.005")
 
     def post(self, user=None):
         """

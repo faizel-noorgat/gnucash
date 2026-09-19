@@ -23,9 +23,12 @@ Accounting Semantics:
 
 import uuid
 from datetime import date
+from decimal import Decimal
 from typing import Optional
 
+from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class FiscalPeriodStatus(models.TextChoices):
@@ -105,7 +108,7 @@ class FiscalPeriod(models.Model):
 
     closed_at = models.DateTimeField(null=True, blank=True)
     closed_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

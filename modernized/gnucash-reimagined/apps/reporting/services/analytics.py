@@ -258,7 +258,12 @@ def _financial_ratio(
 
 
 # ---------------------------------------------------------------------------
-# Explainer providers (stub only — real providers live in ai_explainer)
+# Explainer providers
+#
+# ``ExplainerResponse`` / ``ExplainerProvider`` / ``StubExplainer`` are the
+# one and only explainer abstraction in this context. The LLM-backed
+# providers (OpenAI, Anthropic) live in ``ai_explainer`` and are implemented
+# against ``ExplainerProvider`` — they must not define a competing interface.
 # ---------------------------------------------------------------------------
 
 
@@ -270,6 +275,26 @@ class ExplainerResponse:
     provider: str
     model: str
     confidence_score: float | None
+
+
+class ExplainerProvider(Protocol):
+    """The interface every explainer provider satisfies.
+
+    A provider receives an ``AnalyticResult`` whose metrics were computed by
+    the deterministic runners above and whose evidence has already passed the
+    evidence gate. It may only produce prose that *references* those numbers;
+    it never recomputes or invents them.
+    """
+
+    provider_name: str
+    model_name: str
+
+    def explain(
+        self,
+        *,
+        result: AnalyticResult,
+        natural_language_question: str | None,
+    ) -> ExplainerResponse: ...
 
 
 class StubExplainer:
@@ -305,6 +330,26 @@ class StubExplainer:
 
 
 # ---------------------------------------------------------------------------
+# Evidence gate
+# ---------------------------------------------------------------------------
+
+
+def require_evidence(result: AnalyticResult) -> None:
+    """Raise if the analytic result has no evidence.
+
+    An insight without evidence is a hallucination and must not be shown to
+    the user. This is the single implementation of the gate: both
+    ``AnalyticsService`` and the AI explainer delegate here, so the
+    deterministic layer and the LLM layer cannot drift apart.
+    """
+    if not result.evidence:
+        raise EvidenceMissingError(
+            f"analytic query {result.query_kind.value!r} produced no evidence; "
+            "refusing to generate an insight."
+        )
+
+
+# ---------------------------------------------------------------------------
 # The service
 # ---------------------------------------------------------------------------
 
@@ -316,7 +361,7 @@ class AnalyticsService:
     a narrative that references the deterministic evidence.
     """
 
-    def __init__(self, explainer: Any | None = None) -> None:
+    def __init__(self, explainer: ExplainerProvider | None = None) -> None:
         # Default to the stub explainer — production deployments inject
         # an OpenAI / Anthropic explainer via settings.
         self._explainer = explainer or StubExplainer()
@@ -351,14 +396,10 @@ class AnalyticsService:
     def require_evidence(result: AnalyticResult) -> None:
         """Raise if the analytic result has no evidence.
 
-        An insight without evidence is a hallucination and must not be
-        shown to the user.
+        Delegates to the module-level ``require_evidence`` gate so that
+        there is exactly one implementation of this rule.
         """
-        if not result.evidence:
-            raise EvidenceMissingError(
-                f"analytic query {result.query_kind.value!r} produced no evidence; "
-                "refusing to generate an insight."
-            )
+        require_evidence(result)
 
     # ------------------------------------------------------------------
     # Phase 3: optional AI explanation

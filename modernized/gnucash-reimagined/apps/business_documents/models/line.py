@@ -109,14 +109,13 @@ class DocumentLine(models.Model):
         help_text="Final line total"
     )
 
-    # Optional project/dimension
-    project = models.ForeignKey(
-        'accounting.Project',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='document_lines'
-    )
+    # NOTE: an "optional project/dimension" FK to 'accounting.Project' used to
+    # sit here. No Project model has ever existed - not in apps/accounting, not
+    # in any of the round-one service trees - and nothing referenced the field.
+    # It made `manage.py check` fail with fields.E300/E307 and blocked
+    # makemigrations outright. Removed rather than invented: if accounting
+    # dimensions are wanted, they should be designed deliberately and the model
+    # added, at which point this FK can come back.
 
     # Notes
     notes = models.TextField(blank=True)
@@ -132,6 +131,25 @@ class DocumentLine(models.Model):
         ordering = ['line_number']
         unique_together = [
             ['document', 'line_number'],
+        ]
+        constraints = [
+            # BR-BUS-002: amounts in entries are always stored as positive
+            # values; the sign is applied when the line is converted to posting
+            # splits, based on the owner type (customer vs vendor/employee).
+            # A negative quantity or unit price must therefore never reach the
+            # database.
+            #
+            # Enforced as a CheckConstraint rather than a field validator
+            # because DocumentLine.save() does not call full_clean(), so
+            # validators would never run on the ordinary save path.
+            models.CheckConstraint(
+                condition=models.Q(quantity__gt=0),
+                name='documentline_quantity_positive',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(unit_price__gte=0),
+                name='documentline_unit_price_non_negative',
+            ),
         ]
 
     def __str__(self):

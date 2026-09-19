@@ -5,15 +5,25 @@ Integrates directly with apps.accounting.services.posting.PostingService
 to ensure atomic transaction execution.
 """
 from django.db import transaction
-from decimal import Decimal
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from apps.business_documents.models import (
     AccountingDocument,
     DocumentDirection,
-    DocumentType,
-    DocumentStatus,
 )
+
+if TYPE_CHECKING:
+    # Accounting models are resolved at runtime via apps.get_model() inside each
+    # method, to avoid a cross-app import cycle. These imports exist only so the
+    # string return annotations below resolve for type checkers.
+    from apps.accounting.models import Account, JournalEntry
+
+# JournalEntry.num is 50 wide while AccountingDocument.document_number is 100,
+# and JournalLine.memo is 1024 wide while DocumentLine.description is an
+# unbounded TextField. Both engine models run full_clean() on save, so an
+# over-long value would abort the posting rather than truncate silently.
+_MAX_ENTRY_NUM = 50
+_MAX_MEMO = 1024
 
 
 class DocumentPostingService:
@@ -30,14 +40,19 @@ class DocumentPostingService:
         """
         Post a document to the accounting engine.
 
-        Creates a journal entry with lines for each document line item.
+        Builds a balanced journal entry from the document's lines and hands it
+        to the accounting engine's PostingService, which owns creation, balance
+        validation and the posting transition. The document itself is left
+        untouched: marking it posted is a separate one-way transition the caller
+        performs with ``document.mark_posted(user, journal_entry)``, exactly as
+        the legacy view did.
 
         Args:
             document: The accounting document to post
             user: The user performing the posting
 
         Returns:
-            The created JournalEntry
+            The created JournalEntry, already posted
 
         Raises:
             ValueError: If document cannot be posted or is invalid
@@ -49,86 +64,82 @@ class DocumentPostingService:
         if not document.can_post():
             raise ValueError(f"Document in {document.status} status cannot be posted")
 
-        # Import accounting engine models and services
-        from django.apps import apps
+        # Import here: the accounting app imports business_documents models, so
+        # a module-level import would close a cycle.
         from apps.accounting.services.posting import PostingService
 
-        JournalEntry = apps.get_model('accounting', 'JournalEntry')
-        JournalLine = apps.get_model('accounting', 'JournalLine')
-        Account = apps.get_model('accounting', 'Account')
-
-        # Get accounting engine posting service
-        posting_service = PostingService()
-
-        # Determine accounts based on document type and direction
-        receivable_account = self._get_receivable_account(document)
-        payable_account = self._get_payable_account(document)
-
-        # Create journal entry via accounting engine
-        journal_entry = JournalEntry.objects.create(
+        journal_entry = PostingService.create_and_post_journal_entry(
             tenant=document.tenant,
             legal_entity=document.legal_entity,
-            transaction_date=document.document_date,
+            date=document.document_date,
             description=f"{document.get_document_type_display()} {document.document_number}",
+            lines=self._build_journal_lines(document),
             transaction_currency=document.currency,
-            reference_document=document,
-            posted_by=user,
-            is_posted=True
+            user=user,
+            reference=document.reference_number,
+            num=document.document_number[:_MAX_ENTRY_NUM],
+            source_document=document,
         )
 
-        # Create journal lines for each document line
-        for doc_line in document.lines.all():
-            # Calculate amounts based on direction
-            if document.direction == DocumentDirection.SALES:
-                # Sales: Debit AR, Credit Income
-                # Debit receivable account
-                JournalLine.objects.create(
-                    journal_entry=journal_entry,
-                    account=receivable_account,
-                    amount=doc_line.total,
-                    value=doc_line.total,
-                    description=doc_line.description,
-                    reference_line=doc_line
-                )
-
-                # Credit income account
-                JournalLine.objects.create(
-                    journal_entry=journal_entry,
-                    account=doc_line.account,
-                    amount=-doc_line.total,
-                    value=-doc_line.total,
-                    description=doc_line.description,
-                    reference_line=doc_line
-                )
-            else:
-                # Purchase: Debit Expense, Credit AP
-                # Debit expense account
-                JournalLine.objects.create(
-                    journal_entry=journal_entry,
-                    account=doc_line.account,
-                    amount=doc_line.total,
-                    value=doc_line.total,
-                    description=doc_line.description,
-                    reference_line=doc_line
-                )
-
-                # Credit payable account
-                JournalLine.objects.create(
-                    journal_entry=journal_entry,
-                    account=payable_account,
-                    amount=-doc_line.total,
-                    value=-doc_line.total,
-                    description=doc_line.description,
-                    reference_line=doc_line
-                )
-
-        # Validate journal entry balances
-        self._validate_journal_entry_balance(journal_entry)
-
-        # Mark document as posted
-        document.mark_posted(user, journal_entry)
-
         return journal_entry
+
+    def _build_journal_lines(self, document: AccountingDocument) -> list[dict]:
+        """
+        Convert the document's lines into accounting-engine line dicts.
+
+        BR-BUS-002: document line amounts are always stored positive; the sign
+        for the split is carried by the entry, not by the document. So the
+        stored ``doc_line.total`` is never negated in place - each document line
+        becomes a pair of splits, and the debit/credit direction is expressed by
+        which side takes ``+total`` and which takes ``-total``. That is the
+        engine's own convention (see
+        tests/accounting/golden/test_br_bus_001_002.py: a sales invoice debits AR
+        positive and credits revenue negative).
+
+        Only the settlement account the direction actually needs is resolved: a
+        sales invoice posts AR and must not require an AP account to exist, and
+        vice versa.
+        """
+        if document.direction == DocumentDirection.SALES:
+            # Sales: debit AR, credit the line's income account.
+            settlement_account = self._get_receivable_account(document)
+            settlement_on_debit_side = True
+        elif document.direction == DocumentDirection.PURCHASE:
+            # Purchase: debit the line's expense account, credit AP.
+            settlement_account = self._get_payable_account(document)
+            settlement_on_debit_side = False
+        else:
+            raise ValueError(f"Unknown document direction: {document.direction}")
+
+        lines = []
+        for doc_line in document.lines.all():
+            amount = doc_line.total
+            memo = doc_line.description[:_MAX_MEMO]
+
+            if settlement_on_debit_side:
+                lines.append(self._journal_line(settlement_account, amount, memo))
+                lines.append(self._journal_line(doc_line.account, -amount, memo))
+            else:
+                lines.append(self._journal_line(doc_line.account, amount, memo))
+                lines.append(self._journal_line(settlement_account, -amount, memo))
+
+        return lines
+
+    @staticmethod
+    def _journal_line(account: 'Account', amount, memo: str) -> dict:
+        """
+        Build one split for PostingService.create_and_post_journal_entry.
+
+        ``amount`` is in the account's commodity and ``value`` in the
+        transaction currency; documents are single-currency here, so the two
+        are equal.
+        """
+        return {
+            "account": account,
+            "amount": amount,
+            "value": amount,
+            "memo": memo,
+        }
 
     def _get_receivable_account(self, document: AccountingDocument) -> 'Account':
         """Get the accounts receivable account"""
@@ -163,14 +174,3 @@ class DocumentPostingService:
             raise ValueError("No accounts payable account found")
 
         return account
-
-    def _validate_journal_entry_balance(self, journal_entry):
-        """
-        Validate that journal entry balances to zero.
-
-        BR-ACCT-001: Transaction balance invariant (double-entry)
-        """
-        total = sum(line.value for line in journal_entry.lines.all())
-
-        if total != Decimal('0.0000'):
-            raise ValueError(f"Journal entry does not balance: total is {total}, expected 0")

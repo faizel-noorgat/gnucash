@@ -21,6 +21,8 @@ Design principles:
 from __future__ import annotations
 
 __all__ = [
+    "UploadService",
+    "DuplicateDetectionService",
     "OCRService",
     "ExtractionService",
     "MatchingService",

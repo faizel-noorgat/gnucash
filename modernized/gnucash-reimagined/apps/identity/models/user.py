@@ -4,8 +4,57 @@ User domain model.
 Represents a platform user with authentication and profile information.
 """
 import uuid
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
+
+
+class UserManager(BaseUserManager):
+    """Manager for the email-as-username custom user model.
+
+    Django's stock ``UserManager.create_user`` takes ``username`` as its first
+    positional argument, which cannot work for a model whose ``USERNAME_FIELD``
+    is ``email`` - every ``User.objects.create_user(email=..., ...)`` call site
+    would raise TypeError. A custom user model with a non-username identifier
+    requires a matching manager, so this replaces the inherited one.
+
+    ``use_in_migrations`` mirrors Django's own manager so that historical
+    migrations keep a stable reference to it.
+    """
+
+    use_in_migrations = True
+
+    def _create_user(self, email, password, **extra_fields):
+        """Create and save a user with the given email and password."""
+        if not email:
+            raise ValueError("Users must have an email address")
+        email = self.normalize_email(email)
+        # `username` is inherited from AbstractUser and is UNIQUE, so it must be
+        # populated for every user. Deriving it from the email keeps that
+        # constraint satisfiable without forcing callers to supply a value that
+        # is no longer the login identifier.
+        extra_fields.setdefault("username", email)
+        user = self.model(email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, email, password=None, **extra_fields):
+        """Create a regular user (is_staff/is_superuser default to False)."""
+        extra_fields.setdefault("is_staff", False)
+        extra_fields.setdefault("is_superuser", False)
+        return self._create_user(email, password, **extra_fields)
+
+    def create_superuser(self, email, password=None, **extra_fields):
+        """Create a superuser, enforcing the staff/superuser flags."""
+        extra_fields.setdefault("is_staff", True)
+        extra_fields.setdefault("is_superuser", True)
+
+        if extra_fields.get("is_staff") is not True:
+            raise ValueError("Superuser must have is_staff=True.")
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+
+        return self._create_user(email, password, **extra_fields)
 
 
 class User(AbstractUser):
@@ -46,6 +95,8 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+
+    objects = UserManager()
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

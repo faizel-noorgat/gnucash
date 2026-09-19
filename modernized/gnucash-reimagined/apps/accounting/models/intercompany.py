@@ -33,6 +33,7 @@ Accounting Semantics:
 import uuid
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 
 
@@ -220,14 +221,14 @@ class InterEntityEvent(models.Model):
 
     # Approval
     proposed_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name="proposed_intercompany_events",
     )
     accepted_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -354,7 +355,7 @@ class CounterpartPosting(models.Model):
         related_name="counterpart_postings",
     )
     accepted_by = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -190,6 +190,38 @@ class GoogleDocumentAIProvider(BaseOCRProvider):
         )
 
 
+def get_ocr_provider() -> OCRProvider:
+    """Factory function to get the configured OCR provider.
+
+    Dispatches on `settings.DOCUMENT_INTELLIGENCE["OCR_PROVIDER"]` so no
+    particular OCR vendor is hard-wired into the orchestration code.
+
+    Recognised values:
+        "mock" (default), "aws_textract", "google_document_ai"
+        ("google_documentai" is accepted as an alias of the latter).
+
+    Unknown values fall back to the mock provider with a warning rather than
+    raising, matching `services.storage.get_storage_client`.
+
+    Returns:
+        OCRProvider instance
+    """
+    conf = settings.DOCUMENT_INTELLIGENCE
+    provider_name = conf.get("OCR_PROVIDER", "mock")
+
+    if provider_name == "mock":
+        return MockOCRProvider()
+    elif provider_name == "aws_textract":
+        return AWSTextractProvider()
+    elif provider_name in ("google_document_ai", "google_documentai"):
+        return GoogleDocumentAIProvider()
+    else:
+        logger.warning(
+            "Unknown OCR provider '%s', falling back to mock", provider_name
+        )
+        return MockOCRProvider()
+
+
 class OCRService:
     """Orchestrates OCR extraction with provider selection and fallback.
 
@@ -207,20 +239,8 @@ class OCRService:
         self.provider = provider or self._get_default_provider()
 
     def _get_default_provider(self) -> OCRProvider:
-        """Get default OCR provider from settings."""
-        provider_name = settings.DOCUMENT_INTELLIGENCE.get("OCR_PROVIDER", "mock")
-
-        if provider_name == "mock":
-            return MockOCRProvider()
-        elif provider_name == "aws_textract":
-            return AWSTextractProvider()
-        elif provider_name == "google_document_ai":
-            return GoogleDocumentAIProvider()
-        else:
-            logger.warning(
-                "Unknown OCR provider '%s', falling back to mock", provider_name
-            )
-            return MockOCRProvider()
+        """Get default OCR provider from settings (see `get_ocr_provider`)."""
+        return get_ocr_provider()
 
     def run_ocr(self, document: Document) -> OCRResult:
         """Run OCR on a document.

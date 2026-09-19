@@ -28,6 +28,7 @@ Accounting Semantics:
 
 import uuid
 
+from django.conf import settings
 from django.db import models
 from django.utils import timezone
 
@@ -134,7 +135,7 @@ class AuditEvent(models.Model):
         db_index=True,
     )
     actor = models.ForeignKey(
-        "auth.User",
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

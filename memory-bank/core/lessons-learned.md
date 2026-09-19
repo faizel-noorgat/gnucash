@@ -51,3 +51,64 @@ Format:
 **Symptom:** The same fact has several values depending on where you read it. In this repo: rule splits of 47/164/26 versus 47/142/48, golden tests counted as 20 versus 39 on disk, file counts of 1,345 versus 1,801, and two modernization plans that both state they are approved.
 
 **Fix:** Treat every number in a generated artifact as a claim, not a finding. Re-derive it from the tree before repeating it, and say which source a number came from when it matters. When two plans or documents both claim approval, that is a live conflict to surface — not a detail to average over.
+
+---
+
+## LL-005 — A pipeline hides the exit status of whatever is inside it
+
+**Trigger:** `set -e` plus a command piped onward, e.g. `pip install ... | tail -25`, then checking `$?`.
+
+**Symptom:** The pipeline reports success because `$?` is the *last* command's status, not the piped one's. A failed install prints `ERROR: Could not find a version that satisfies the requirement ...` and the script still reports "EXIT: 0". Long stretches spent believing an environment exists when it does not.
+
+**Fix:** Add `set -o pipefail`, or redirect to a file and check the status of the real command. Verify the end state directly (import the package, stat the artefact) rather than trusting a status.
+
+---
+
+## LL-006 — Only *some* undefined names block an import; linting does not tell you which
+
+**Trigger:** Undefined names reported by `ruff --select F821` (or pyflakes) across a module.
+
+**Symptom:** A missing import breaks things in three different ways depending on where the name sits. In a plain function-signature annotation (`def f(x: Decimal) -> Decimal:`) it raises `NameError` at *def* time and kills the whole process — here it took down `django.setup()` for the entire project. In a class-body annotation it raises at class-creation time. In a *string* annotation (`-> "Decimal"`) or inside a method body it is entirely latent and only fails when something calls `typing.get_type_hints()` or invokes the method. Ruff reports all three identically, so a fix-until-clean loop fixes latent ones first and the blocker last.
+
+**Fix:** When an import dies, rank the candidates by where the name appears before fixing anything: signature annotations first, then class bodies, then string annotations and bodies. Fix all of them — a latent one is still a defect — but expect the process-killer to be last.
+
+---
+
+## LL-007 — An application-layer guard is not a boundary
+
+**Trigger:** Assuming a model's `clean()` / `save()` validation protects an invariant.
+
+**Symptom:** `QuerySet.update()`, `bulk_create`, raw SQL, and data-fix scripts all skip `Model.save()` entirely. In this repo a posted-journal immutability guard existed only in `clean()` while the ADR called it "immutability" — and the code's own comment claimed a database trigger that had never been written. Worse, a fixture-built posted entry meant six tests never exercised the guard at all.
+
+**Fix:** Enforce financial and security invariants in the database (`RunSQL` triggers, `CheckConstraint`) and treat the ORM guard as defence in depth. Test the *bypass paths* explicitly, not just the happy path — and note that a guard which cannot be reached, because the fixture can't construct the state that would trigger it, is untested no matter how green the suite is.
+
+---
+
+## LL-008 — A test can pass for the right result and the wrong reason; assert the specific failure
+
+**Trigger:** `assertRaises(Exception)` / `pytest.raises(DatabaseError)` with no message match.
+
+**Symptom:** The test goes green while proving nothing about the mechanism it names. An ORM-delete test here passed because Django's *deletion collector* crashed on a missing unmanaged table — nothing to do with the trigger under test. It then flipped to failing on a later run when the trigger happened to fire first, because the ordering is not stable.
+
+**Fix:** Match the specific message or exception subclass the mechanism produces (`pytest.raises(DatabaseError, match="ADR-010")`). Where two different layers can legitimately refuse and the ordering is not stable, say so in the docstring and widen only deliberately — never leave the reason implicit.
+
+---
+
+## LL-009 — An unconditional skip inside a test body silently disables every assertion below it
+
+**Trigger:** `pytest.xfail(...)` or `pytest.skip(...)` as the first statement of a test.
+
+**Symptom:** The test reports as skipped/xfailed and looks accounted for, while the whole body is dead code. Two tests here carried `pytest.xfail("Accounting engine not yet implemented")` for a whole phase — the engine was by then implemented and green, and removing the call immediately exposed that the service they tested was completely broken. The stale reason string gave no hint.
+
+**Fix:** Grep for in-body `pytest.xfail`/`pytest.skip` when auditing coverage, and tie any such marker to a tracked item with a review date. Prefer a decorator with a matching ID over a body call, so the reason is visible at collection time.
+
+---
+
+## LL-010 — Overriding a framework's setup fixture replaces it entirely, it does not wrap it
+
+**Trigger:** Redefining `django_db_setup` (or any framework-provided fixture) to "adjust" configuration.
+
+**Symptom:** The override supplies only what the author had in mind and silently drops everything else the original did. Here `django_db_setup` was redefined to mutate `settings.DATABASES` and never called the original — which is the fixture that *creates the test database*. Every DB-backed test was unrunnable, and the failure (`relation "auth_group" does not exist`) pointed nowhere near the cause.
+
+**Fix:** Never redefine a framework fixture to tweak a setting; put configuration in settings, where it belongs. If an override is genuinely needed, call the original explicitly and note in its docstring which behaviour is being preserved.
+

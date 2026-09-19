@@ -20,6 +20,7 @@ Accounting Semantics:
 """
 
 import uuid
+from decimal import Decimal
 from typing import Optional
 
 from django.db import models

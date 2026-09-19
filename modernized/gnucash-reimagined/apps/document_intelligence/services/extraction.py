@@ -37,7 +37,7 @@ from ..models import (
     ExtractionStatus,
     ExtractionVersion,
 )
-from .ocr import OCRResult
+from .ocr import OCRProvider, OCRResult
 
 logger = logging.getLogger(__name__)
 
@@ -186,63 +186,119 @@ class LLMExtractionEngine:
         )
 
 
+def get_extraction_engine() -> ExtractionEngine:
+    """Factory function to get the configured extraction engine.
+
+    Dispatches on `settings.DOCUMENT_INTELLIGENCE["EXTRACTION_ENGINE"]` so no
+    particular extraction vendor is hard-wired into the orchestration code.
+
+    Recognised values:
+        "mock" (default), "rule_based", "llm"
+
+    Unknown values fall back to the mock engine with a warning rather than
+    raising, matching `services.storage.get_storage_client`.
+
+    Returns:
+        ExtractionEngine instance
+    """
+    conf = settings.DOCUMENT_INTELLIGENCE
+    engine_name = conf.get("EXTRACTION_ENGINE", "mock")
+
+    if engine_name == "mock":
+        return MockExtractionEngine()
+    elif engine_name == "rule_based":
+        return RuleBasedExtractionEngine()
+    elif engine_name == "llm":
+        return LLMExtractionEngine(llm_provider=conf.get("LLM_PROVIDER", "openai"))
+    else:
+        logger.warning(
+            "Unknown extraction engine '%s', falling back to mock", engine_name
+        )
+        return MockExtractionEngine()
+
+
 class ExtractionService:
     """Orchestrates structured extraction from OCR results.
 
-    Usage:
+    Usage (unified — caller supplies a pre-computed OCR result):
         service = ExtractionService()
         extraction = service.run_extraction(document, ocr_result)
+
+    Usage (legacy — service owns the OCR step):
+        service = ExtractionService(
+            extraction_engine=get_extraction_engine(),
+            ocr_provider=get_ocr_provider(),
+            ai_suggester=get_ai_suggester(),
+        )
+        extraction = service.run_extraction(document)
     """
 
     def __init__(
         self,
         engine: ExtractionEngine | None = None,
         ai_suggester: "AISuggester | None" = None,
+        *,
+        extraction_engine: ExtractionEngine | None = None,
+        ocr_provider: OCRProvider | None = None,
     ) -> None:
         """Initialize extraction service.
 
         Args:
             engine: Extraction engine to use. If None, uses configured default.
             ai_suggester: Optional AI suggester for accounting suggestions.
+            extraction_engine: Legacy alias for `engine` (accepted so callers
+                migrated from the standalone service keep working).
+            ocr_provider: Legacy optional OCR provider. When supplied,
+                `run_extraction` may be called without a pre-computed OCR
+                result and will run OCR itself.
         """
-        self.engine = engine or self._get_default_engine()
-        self.ai_suggester = ai_suggester
+        if engine is not None and extraction_engine is not None:
+            raise TypeError(
+                "ExtractionService got both 'engine' and its alias "
+                "'extraction_engine'; pass only one."
+            )
+
         self.conf = settings.DOCUMENT_INTELLIGENCE
+        self.engine = engine or extraction_engine or self._get_default_engine()
+        self.ai_suggester = ai_suggester
+        self.ocr_provider = ocr_provider
+
+    @property
+    def extraction_engine(self) -> ExtractionEngine:
+        """Legacy alias for `engine`."""
+        return self.engine
 
     def _get_default_engine(self) -> ExtractionEngine:
-        """Get default extraction engine from settings."""
-        engine_name = settings.DOCUMENT_INTELLIGENCE.get("EXTRACTION_ENGINE", "mock")
-
-        if engine_name == "mock":
-            return MockExtractionEngine()
-        elif engine_name == "rule_based":
-            return RuleBasedExtractionEngine()
-        elif engine_name == "llm":
-            llm_provider = settings.DOCUMENT_INTELLIGENCE.get("LLM_PROVIDER", "openai")
-            return LLMExtractionEngine(llm_provider=llm_provider)
-        else:
-            logger.warning(
-                "Unknown extraction engine '%s', falling back to mock", engine_name
-            )
-            return MockExtractionEngine()
+        """Get default extraction engine from settings (see the factory)."""
+        return get_extraction_engine()
 
     def run_extraction(
         self,
         document: Document,
-        ocr_result: OCRResult,
+        ocr_result: OCRResult | None = None,
     ) -> DocumentExtraction:
         """Run structured extraction on OCR result.
 
         Always creates a NEW DocumentExtraction row with version+1.
         Never mutates a previous extraction (BR-DI-003, BR-DI-009).
+        The result is a *proposal*: nothing is posted downstream (BR-DI-009).
 
         Args:
             document: Document to extract from
-            ocr_result: OCR result to process
+            ocr_result: OCR result to process. If None, the injected
+                `ocr_provider` is used to produce one.
 
         Returns:
             DocumentExtraction with structured result
         """
+        if ocr_result is None:
+            if self.ocr_provider is None:
+                raise ValueError(
+                    "run_extraction requires an ocr_result or an injected "
+                    "ocr_provider to produce one."
+                )
+            ocr_result = self.ocr_provider.extract(document=document)
+
         logger.info(
             "ExtractionService: running extraction on document %s (tenant=%s)",
             document.guid,
@@ -357,8 +413,22 @@ class ExtractionService:
         )
 
         with transaction.atomic():
-            version_counter = ExtractionVersion.objects.select_for_update().get(
-                document=extraction.document
+            # The version counter is normally created by run_extraction. A
+            # correction can also be applied to an extraction that was created
+            # outside that path (BR-DI-004 seeds a v1 row directly), so the
+            # counter is recreated from the highest existing version. The new
+            # row then still gets MAX(version) + 1 and never collides.
+            latest_version = (
+                DocumentExtraction.objects.filter(document=extraction.document)
+                .order_by("-version")
+                .values_list("version", flat=True)
+                .first()
+            ) or 0
+            version_counter, _ = (
+                ExtractionVersion.objects.select_for_update().get_or_create(
+                    document=extraction.document,
+                    defaults={"current_version": latest_version},
+                )
             )
             new_version = version_counter.next_version()
 

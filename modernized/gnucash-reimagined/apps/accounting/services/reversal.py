@@ -46,7 +46,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from accounting.models import (
+from apps.accounting.models import (
     AuditEvent,
     JournalEntry,
     JournalLine,
@@ -108,9 +108,12 @@ class ReversalService:
             })
 
         # Import here to avoid circular dependency
-        from accounting.services.posting import PostingService
+        from apps.accounting.services.posting import PostingService
 
-        # Create and post reversal
+        # Create and post reversal. The back-link to the original is set at
+        # creation: create_and_post_journal_entry posts the entry before
+        # returning, and ADR-010 then makes it immutable, so there is no window
+        # in which to attach `reversal_of` afterwards.
         reversal = PostingService.create_and_post_journal_entry(
             tenant=original_entry.tenant,
             legal_entity=original_entry.legal_entity,
@@ -119,12 +122,9 @@ class ReversalService:
             lines=reversal_lines,
             transaction_currency=original_entry.transaction_currency,
             user=user,
+            reversal_of=original_entry,
+            is_reversal=True,
         )
-
-        # Link reversal to original
-        reversal.reversal_of = original_entry
-        reversal.is_reversal = True
-        reversal.save()
 
         # Log the reversal
         AuditEvent.log(
@@ -201,11 +201,13 @@ class ReversalService:
             raise ValidationError("No corrections needed.")
 
         # Import here to avoid circular dependency
-        from accounting.services.posting import PostingService
+        from apps.accounting.services.posting import PostingService
 
         correcting_desc = description or f"Correction of: {original_entry.description}"
 
-        # Create and post correction
+        # Create and post correction. The back-link is set at creation for the
+        # same reason as in create_reversal_entry: the entry is posted before
+        # this call returns, after which ADR-010 forbids further mutation.
         correcting_entry = PostingService.create_and_post_journal_entry(
             tenant=original_entry.tenant,
             legal_entity=original_entry.legal_entity,
@@ -214,11 +216,8 @@ class ReversalService:
             lines=correcting_lines,
             transaction_currency=original_entry.transaction_currency,
             user=user,
+            correcting_of=original_entry,
         )
-
-        # Link correction to original
-        correcting_entry.correcting_of = original_entry
-        correcting_entry.save()
 
         # Log the correction
         AuditEvent.log(

@@ -42,7 +42,7 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from accounting.models import (
+from apps.accounting.models import (
     Account,
     AuditEvent,
     FiscalPeriod,
@@ -182,6 +182,9 @@ class PostingService:
         reference: str = "",
         num: str = "",
         source_document=None,
+        reversal_of=None,
+        is_reversal: bool = False,
+        correcting_of=None,
     ) -> JournalEntry:
         """
         Create and post a journal entry in one atomic operation.
@@ -210,7 +213,12 @@ class PostingService:
             Posted JournalEntry
         """
         with transaction.atomic():
-            # Create journal entry
+            # Create journal entry.
+            # The reversal/correction links are passed in HERE rather than being
+            # attached afterwards: this method posts the entry before it
+            # returns, and ADR-010 makes a posted entry immutable, so a
+            # subsequent `entry.reversal_of = ...; entry.save()` is rejected by
+            # the database trigger.
             journal_entry = JournalEntry.objects.create(
                 date=date,
                 description=description,
@@ -221,6 +229,9 @@ class PostingService:
                 legal_entity=legal_entity,
                 source_document=source_document,
                 idempotency_key=idempotency_key,
+                reversal_of=reversal_of,
+                is_reversal=is_reversal,
+                correcting_of=correcting_of,
             )
 
             # Create journal lines
@@ -270,8 +281,15 @@ class PostingService:
         if not journal_entry.is_posted:
             raise ValidationError("Can only void posted journal entries.")
 
-        # Create reversal
-        reversal = PostingService.create_reversal_entry(
+        # Create reversal.
+        # NOTE: `create_reversal_entry` lives on ReversalService, not on
+        # PostingService. This previously read `PostingService.create_reversal_entry`
+        # and raised AttributeError on every call, so voiding a posted entry never
+        # worked. Imported locally because reversal.py imports PostingService in
+        # turn, and a module-level import here would be circular.
+        from apps.accounting.services.reversal import ReversalService
+
+        reversal = ReversalService.create_reversal_entry(
             original_entry=journal_entry,
             user=user,
             description=f"Void: {journal_entry.description}",

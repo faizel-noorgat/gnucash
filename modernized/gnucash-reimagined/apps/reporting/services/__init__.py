@@ -15,15 +15,25 @@ No arithmetic is ever delegated to the LLM. The AI layer is given
 that references them.
 """
 
+from . import ai_explainer, analytics, dashboards, golden_dependency, kpis, reports
 from .analytics import AnalyticsService, analytics_service
 from .dashboards import DashboardService, dashboard_service
 from .reports import ReportGenerationService, report_service
 
 __all__ = [
+    # service classes + module-level instances
     "ReportGenerationService",
     "report_service",
     "AnalyticsService",
     "analytics_service",
     "DashboardService",
     "dashboard_service",
+    # submodules — importable as package attributes:
+    # ``from apps.reporting.services import ai_explainer, analytics, reports``
+    "ai_explainer",
+    "analytics",
+    "dashboards",
+    "golden_dependency",
+    "kpis",
+    "reports",
 ]
