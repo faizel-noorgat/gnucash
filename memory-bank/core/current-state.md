@@ -1,18 +1,18 @@
 # Current State
 
-**Status:** ACTIVE
+**Status:** IDLE
 
-**Last Updated:** 2026-09-19T10:25:49Z
+**Last Updated:** 2026-09-19T10:35:52Z
 
-**Last Session Summary:** Closed the "Gnucash modernization" thread (ran 2026-09-18T12:48Z → 2026-09-19T09:48Z) by mining its transcript with five parallel investigators and checking every claim against the tree. The thread produced a 19-artifact analysis tree under `analysis/gnucash/` and a 459-file reimagine scaffold under `modernized/gnucash-reimagined/`, including spikes and an approved target architecture — but it never ran a single test on the new code, and it died on HTTP 429 while migrating tests. Two modernization plans now sit on disk both presenting themselves as the plan. Nothing is committed.
+**Last Session Summary:** Committed the entire modernization workstream to the fork. 417 files (59,762 insertions) — the 19-artifact `analysis/gnucash/` tree, the 386-file `modernized/gnucash-reimagined/` scaffold, `.claude/` session tooling, and `memory-bank/core/` — now sit on branch `modernization/reimagine-scaffold` at commit `74374234d1`, off `stable` @ upstream `fb2c773bf6`. Live scratchpad state, the scheduled-tasks lock, and `__pycache__` were gitignored rather than committed. Nothing is pushed; the branch is local only (T-0009). Still true: no test has ever run against the reimagined tree.
 
-**Branch / HEAD:** `stable` @ `fb2c773bf6` — an upstream commit. Working tree carries `M .gitignore` plus four untracked directories: `.claude/`, `analysis/`, `memory-bank/`, `modernized/`.
+**Branch / HEAD:** `modernization/reimagine-scaffold` @ `74374234d1` — local branch, no upstream tracking yet, not pushed. Clean working tree.
 
 **Workstream:** `modernization`
 
-**Build state:** Not verified this session, and not attempted — this session did state mining, not code work. The last *verified* result stands from the 2026-09-18 preflight: at HEAD `fb2c773bf6` with a clean tree, `ninja` completed 845/845 targets and `ninja check` ran 133 tests with 131 passing. The two failures were `test-qof` and `test-gnc-numeric`; they were never diagnosed (T-0008). Do not carry that pass forward — it describes the tree as it was on 09-18, and it is not re-asserted here.
+**Build state:** Not verified this session — this session committed work, it did not build or test anything. The upstream tree's last *verified* result stands from the 2026-09-18 preflight: at HEAD `fb2c773bf6` with a clean tree, `ninja` completed 845/845 targets and `ninja check` ran 133 tests with 131 passing. The two failures were `test-qof` and `test-gnc-numeric`; they were never diagnosed (T-0008). Do not carry that pass forward — it describes the tree as it was on 09-18, and it is not re-asserted here.
 
-The reimagined tree is a separate and worse case: **nothing under `modernized/gnucash-reimagined/` has ever been executed.** No pytest run, no Django migration, no database, no import. Its 87 `apps/` files and 20 test files are written but unproven.
+The reimagined tree is a separate and worse case: **nothing under `modernized/gnucash-reimagined/` has ever been executed.** No pytest run, no Django migration, no database, no import. Its 87 `apps/` files and 20 test files are written but unproven. Every `migrations/` directory holds only `__init__.py`, so `manage.py migrate` cannot run yet (T-0004).
 
 Verify the upstream tree with:
 
@@ -22,13 +22,12 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-**Focus:** Closing the modernization thread — persisting its state and its stopping point, not advancing it.
+**Focus:** Closing the session — deciding the git question (D-0001), committing the workstream to the fork, and persisting state.
 
-**Next:** T-0003 — resume Phase E.1's stalled test migration. T-0004 and T-0005 unblock the golden accounting tests, which is the user's own gate for the whole phase.
+**Next:** T-0009 — `git push -u origin modernization/reimagine-scaffold`, so the work leaves this working tree. Then T-0003 — resume Phase E.1's stalled test migration (7 of 40 files), in batches of ≤3 agents.
 
 **Pending Human Action:**
 
-- **D-0001** — decide whether the four untracked trees (`.claude/`, `memory-bank/core/`, `analysis/`, `modernized/`) are committed to this fork or excluded from git entirely.
 - **T-0007** — confirm that the reimagine track is the live plan and the same-stack uplift brief is dormant. Both are on disk claiming approval.
 - **Q-0001** — confirm whether `borrowed/` plus `contrib/` are the off-limits trees. It was proposed by the assistant and never answered by the user.
 - **Q-0002** — sign off the five medium-confidence P0 business rules before they are frozen as regression contracts.
@@ -41,6 +40,7 @@ ctest --test-dir build --output-on-failure
 
 **Decisions passed:**
 
+- 2026-09-19 — The four working trees (`.claude/`, `analysis/`, `memory-bank/core/`, `modernized/`) are **committed to the fork**, not excluded from git. Committed on branch `modernization/reimagine-scaffold` (`74374234d1`) rather than directly to `stable`, so `stable` stays clean against upstream. `memory-bank/runtime/` live state, `.claude/scheduled_tasks.lock`, and `__pycache__`/`*.pyc` stay ignored — runtime churn, not shared history. (Resolves D-0001.)
 - 2026-09-19 — Session memory ported with two skills (`session-start`, `session-close`) rather than one multi-mode skill, matching the two Cursor commands 1:1.
 - 2026-09-19 — Tracking axes adapted from py-hoarder's SDLC-phase × project-plan model to gnucash-native axes (workstream + build state). GnuCash has no phase plans or `prompts/` tree to track against.
 - 2026-09-19 — `prompts/` and `docs/40-delivery/` deliberately excluded from the port; lessons learned live in `memory-bank/core/lessons-learned.md` instead.

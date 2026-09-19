@@ -8,6 +8,7 @@ Done / Pending / Backlog across sessions.
 
 ## Done
 
+- **2026-09-19** — Committed the modernization workstream to the fork on branch `modernization/reimagine-scaffold` (`74374234d1`): 417 files, 59,762 insertions covering `analysis/`, `modernized/`, `.claude/`, `memory-bank/core/`. Extended `.gitignore` to exclude `memory-bank/runtime/` live state, `.claude/scheduled_tasks.lock`, and `__pycache__`/`*.pyc`. Branch is local only; `stable` untouched. (Resolves D-0001.)
 - **2026-09-19** — Ported session memory from the py-hoarder-v2 Cursor skill to Claude Code. Created `.claude/skills/session-start` and `.claude/skills/session-close`; ported `session_scratchpad.py` verbatim to `.claude/scripts/`; scaffolded `memory-bank/core/` and `memory-bank/runtime/`; ported the scratchpad test suite to stdlib `unittest`.
 - **2026-09-19** — Closed the "Gnucash modernization" thread (09-18T12:48Z → 09-19T09:48Z) by mining its transcript with five parallel investigators and verifying every claim against the tree. Recorded the stopping point, the two conflicting plans, the unrun test suite, and the four open human decisions in the Memory Bank.
 - **2026-09-18/19** — *Inside the modernization thread:* environment preflight and analysis-tool install (`scc`, `lizard`, `glow`, `delta`); fork created and reset to upstream at `fb2c773bf6`; assessment (468,607 SLOC, 1,801 files, 20 hotspots, 0% doc coverage); topology map (1,281 modules, 10 domains, 3 persona flows); business-rule extraction (237 rules = 47 P0, 58 data objects); delta catalog (14 deltas); three completed design spikes (multi-tenancy, multi-currency, semantic verification); target architecture approved through three HITL checkpoints; five bounded contexts scaffolded twice — once as standalone services (drift, redirected) and again as a Django modular monolith under `apps/`.
@@ -16,6 +17,7 @@ Done / Pending / Backlog across sessions.
 
 ## Pending
 
+- Push `modernization/reimagine-scaffold` to the fork — the branch exists only locally (T-0009).
 - Resume the Phase E.1 test migration — 33 of 40 test files remain (T-0003).
 - Generate Django migrations for the five apps; none exist (T-0004).
 - Run the golden accounting tests for the first time — 39 test functions, never executed (T-0005).
@@ -23,7 +25,6 @@ Done / Pending / Backlog across sessions.
 - Confirm which modernization plan is live and mark the other dormant (T-0007).
 - Diagnose the two failing tests in `ninja check` (`test-qof`, `test-gnc-numeric`) (T-0008).
 - Exercise `/session-start` end to end and confirm the boot sequence behaves (T-0001).
-- Decide whether `.claude/`, `memory-bank/core/`, `analysis/` and `modernized/` are committed or excluded from the fork's history (D-0001).
 - Confirm the off-limits trees (Q-0001) and sign off the five medium-confidence P0 rules (Q-0002).
 - Re-apply the plugin-cache agent edits after any `code-modernization` plugin update (F-0001).
 
