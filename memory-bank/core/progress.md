@@ -39,7 +39,6 @@ Current suite: **148 passed, 38 failed** of 186. accounting 56/56, reporting 18/
 - **T-0016** — `Role.get_permissions()` reads `self.permissions`, which is not a field on `Role`; every call raises `AttributeError`.
 - **T-0007** — confirm which modernization plan is live and mark the other dormant.
 - **T-0008** — diagnose the two failing tests in the *upstream* tree's `ninja check` (`test-qof`, `test-gnc-numeric`); unrelated to the reimagine work.
-- **T-0017** — decide whether the two untracked hook probe files under `.claude/scripts/` are wanted; they were deliberately left out of this session's commit.
 - **Q-0001 / Q-0002 / Q-0004** — confirm the off-limits trees; sign off the five medium-confidence P0 rules; decide how a role's permission set narrows to a legal entity (this one gates `get_user_permissions` and the `has_permission` / `user_has_permission` duplication).
 - **F-0001 / F-0002 / F-0003** — re-apply the plugin-cache agent edits after any plugin update; declare `FRONTEND_URL` and the `LLM_*` settings currently read via `getattr` fallbacks; carry project/cost-centre support as future Dimension work.
 - **F-0004 / F-0005 / F-0006** — reclassify the residual stub markers per context; give `User` a TOTP-secret field so `mfa_enabled` means enforced MFA rather than an enrolment flag; settle one `revoke()` parameter name across `ApiToken` and `AdvisorAccessGrant`.

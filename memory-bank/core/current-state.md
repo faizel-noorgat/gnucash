@@ -37,7 +37,6 @@ Test database: `config/settings/test.py` points at `gnucash_test`, created and d
 - **Q-0001** — confirm whether `borrowed/` plus `contrib/` are the off-limits trees. Proposed by the assistant, never answered.
 - **Q-0002** — sign off the five medium-confidence P0 business rules before they are frozen as regression contracts.
 - **Q-0004** — decide how a role's permission set narrows to a legal entity. Until this is settled, `get_user_permissions` and the `has_permission` / `user_has_permission` duplication cannot be resolved.
-- **T-0017** — confirm whether the two untracked hook probe files under `.claude/scripts/` are wanted, then delete or gitignore them.
 
 **Known Blockers:**
 

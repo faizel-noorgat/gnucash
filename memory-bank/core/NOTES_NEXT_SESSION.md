@@ -1,7 +1,7 @@
 # Notes for Next Session
 
 **Written:** 2026-09-19T14:11:07Z
-**Status at Close:** IDLE. Branch `modernization/reimagine-scaffold`, work commit `2b638a4948`, pushed to `origin` with the Memory Bank commit directly on top. Working tree clean apart from two untracked hook probe files (T-0017). Suite: **148 passed / 38 failed** of 186 on PostgreSQL 16.15.
+**Status at Close:** IDLE. Branch `modernization/reimagine-scaffold`, work commit `2b638a4948`, pushed to `origin` with the Memory Bank commit directly on top. Working tree clean. Suite: **148 passed / 38 failed** of 186 on PostgreSQL 16.15.
 
 ---
 
@@ -34,7 +34,6 @@
 - **T-0007** — confirm the reimagine track is live and the same-stack uplift brief is dormant. Both claim approval on disk.
 - **Q-0001** — confirm the off-limits trees (`borrowed/` + `contrib/` were proposed, never answered).
 - **Q-0002** — sign off the five medium-confidence P0 rules before they harden into regression contracts.
-- **T-0017** — confirm whether `.claude/scripts/_hook_probe.py` and `.claude/scripts/_doc_hook_probe.md` are wanted. They appeared untracked during this session, nothing references them, and they were deliberately left out of the commit.
 
 Lower priority: **F-0001** (re-apply plugin-cache agent edits after a plugin update), **F-0002** (`FRONTEND_URL` and the `LLM_*` keys are undeclared settings read via `getattr` fallbacks), **F-0003** (project/cost-centre support belongs to a future Dimension model), **F-0004** (residual `TODO`/`NotImplementedError` markers by context — the identity ones now carry an explicit reason each, the rest do not), **F-0005** (MFA enrolment cannot persist its TOTP secret: the `User` model has no field for it, so `mfa_enabled` is an enrolment flag and not enforced MFA), **F-0006** (`ApiToken.revoke` still takes `revoked_by_user` while `AdvisorAccessGrant.revoke` now takes `revoked_by`).
 
