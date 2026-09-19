@@ -37,6 +37,10 @@ THIRD_PARTY_APPS = [
 
 # Bounded context apps (order matters for dependencies)
 LOCAL_APPS = [
+    # Owns no models of its own - it carries the RLS migrations (helper
+    # functions, the app_user role and the per-table policies) so that a clean
+    # deployment receives them from the migration graph.
+    "common.rls",
     "apps.identity",
     "apps.accounting",
     "apps.business_documents",
