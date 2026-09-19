@@ -38,14 +38,22 @@ class DocumentPostingService:
     @transaction.atomic
     def post_document(self, document: AccountingDocument, user) -> 'JournalEntry':
         """
-        Post a document to the accounting engine.
+        Post a document, ledger entry and document state changing together.
 
-        Builds a balanced journal entry from the document's lines and hands it
-        to the accounting engine's PostingService, which owns creation, balance
-        validation and the posting transition. The document itself is left
-        untouched: marking it posted is a separate one-way transition the caller
-        performs with ``document.mark_posted(user, journal_entry)``, exactly as
-        the legacy view did.
+        Accounting Semantics:
+            Posting is one atomic domain operation, not two. The journal entry
+            is created and posted in the accounting engine and the document is
+            marked posted in the *same* transaction, so either both happen or
+            neither does. There is deliberately no window in which a posted
+            JournalEntry exists alongside a document that still reads DRAFT -
+            under the legacy two-step contract (``post_document()`` then a
+            caller-side ``document.mark_posted()``) a crash or a failed
+            validation between the two calls left exactly that inconsistency,
+            and the ledger disagreed with the document that produced it.
+
+            This is an intentional improvement over the legacy caller contract,
+            not a compatibility regression: callers must no longer mark the
+            document posted themselves.
 
         Args:
             document: The accounting document to post
@@ -57,29 +65,58 @@ class DocumentPostingService:
         Raises:
             ValueError: If document cannot be posted or is invalid
         """
-        # Validate document
-        if document.is_posted:
+        # Lock the row for the rest of the transaction. Without it two
+        # concurrent callers both read DRAFT, both post a journal entry, and the
+        # loser only finds out when mark_posted() raises - after its entry has
+        # already been created.
+        locked = AccountingDocument.objects.select_for_update().get(pk=document.pk)
+
+        if locked.is_posted:
             raise ValueError("Document has already been posted")
 
-        if not document.can_post():
-            raise ValueError(f"Document in {document.status} status cannot be posted")
+        if not locked.can_post():
+            raise ValueError(f"Document in {locked.status} status cannot be posted")
 
-        # Import here: the accounting app imports business_documents models, so
+        # Imports here: the accounting app imports business_documents models, so
         # a module-level import would close a cycle.
+        from apps.accounting.models.audit import AuditAction, AuditEvent
         from apps.accounting.services.posting import PostingService
 
         journal_entry = PostingService.create_and_post_journal_entry(
-            tenant=document.tenant,
-            legal_entity=document.legal_entity,
-            date=document.document_date,
-            description=f"{document.get_document_type_display()} {document.document_number}",
-            lines=self._build_journal_lines(document),
-            transaction_currency=document.currency,
+            tenant=locked.tenant,
+            legal_entity=locked.legal_entity,
+            date=locked.document_date,
+            description=f"{locked.get_document_type_display()} {locked.document_number}",
+            lines=self._build_journal_lines(locked),
+            transaction_currency=locked.currency,
             user=user,
-            reference=document.reference_number,
-            num=document.document_number[:_MAX_ENTRY_NUM],
-            source_document=document,
+            reference=locked.reference_number,
+            num=locked.document_number[:_MAX_ENTRY_NUM],
+            source_document=locked,
         )
+
+        # Same transaction as the posting above, so a failure here rolls the
+        # journal entry back with it. mark_posted() writes the status, the
+        # posting timestamp/actor and the journal entry reference in one save.
+        locked.mark_posted(user, journal_entry)
+
+        AuditEvent.log(
+            tenant=locked.tenant,
+            legal_entity=locked.legal_entity,
+            action=AuditAction.DOCUMENT_POSTED,
+            actor=user,
+            entity_type="AccountingDocument",
+            entity_id=str(locked.pk),
+            metadata={
+                "document_number": locked.document_number,
+                "document_type": locked.document_type,
+                "journal_entry_id": str(journal_entry.pk),
+            },
+        )
+
+        # The caller's instance still holds pre-posting values; refresh it so
+        # `document.status` and the journal reference match what was committed.
+        document.refresh_from_db()
 
         return journal_entry
 

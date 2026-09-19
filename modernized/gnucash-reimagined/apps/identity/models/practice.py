@@ -395,10 +395,15 @@ class AdvisorAccessGrant(models.Model):
         from django.utils import timezone
         return timezone.now() > self.expires_at
 
-    def revoke(self, revoked_by_user, reason=''):
-        """Revoke this access grant."""
+    def revoke(self, revoked_by, reason=''):
+        """Revoke this access grant.
+
+        The parameter is named after the field it sets: callers revoke a grant
+        naming the revoking user, and `revoke(revoked_by=...)` is how the
+        acceptance contract (BR-PRACTICE-002) calls it.
+        """
         from django.utils import timezone
         self.revoked_at = timezone.now()
-        self.revoked_by = revoked_by_user
+        self.revoked_by = revoked_by
         self.revocation_reason = reason
         self.save()

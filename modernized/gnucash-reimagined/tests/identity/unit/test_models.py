@@ -384,7 +384,7 @@ class TestAdvisorAccessGrantModel(TestCase):
             tenant_role=role
         )
 
-        grant.revoke(revoked_by_user=practice_user, reason='Test revocation')
+        grant.revoke(revoked_by=practice_user, reason='Test revocation')
 
         assert not grant.is_active
         assert grant.revoked_at is not None

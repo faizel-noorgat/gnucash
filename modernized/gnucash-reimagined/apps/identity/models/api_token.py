@@ -99,8 +99,17 @@ class ApiToken(models.Model):
         super().save(*args, **kwargs)
 
     def _generate_token(self):
-        """Generate a secure random token."""
-        return f'fva_{secrets.token_urlsafe(96)}'
+        """Generate a secure random token.
+
+        The payload is sized to fit the column it is written into. token_urlsafe
+        emits 4 base64 characters per 3 bytes, so the previous 96 bytes produced
+        exactly 128 characters - the full width of the `token` field - and the
+        'fva_' prefix then pushed the result 4 characters past it. Every
+        ApiToken.objects.create() therefore died with "value too long for type
+        character varying(128)". 80 bytes (640 bits of entropy, far beyond what
+        a token needs) leaves the value at 112 characters.
+        """
+        return f'fva_{secrets.token_urlsafe(80)}'
 
     @property
     def is_expired(self):

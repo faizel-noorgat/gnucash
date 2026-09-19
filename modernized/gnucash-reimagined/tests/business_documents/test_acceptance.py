@@ -19,6 +19,7 @@ from tests.business_documents.factories import (
     TenantFactory, LegalEntityFactory, CurrencyFactory, AccountFactory
 )
 from apps.business_documents.services.posting import DocumentPostingService
+from apps.accounting.models import JournalEntry
 
 
 @pytest.mark.acceptance
@@ -113,13 +114,34 @@ class TestBR_BUS_001_InvoicePostingIsOneWay(TestCase):
     def test_posting_marks_document_as_posted(self):
         """Posting should mark document as posted"""
         # See the note above - the unconditional xfail has been removed.
+        #
+        # post_document() now owns the whole lifecycle, so this test no longer
+        # calls mark_posted() itself. That manual call is what let a posted
+        # JournalEntry sit alongside a document the service had left in DRAFT
+        # without any test noticing.
         journal_entry = self.posting_service.post_document(self.document, self.user)
-        self.document.mark_posted(self.user, journal_entry)
 
         self.assertEqual(self.document.status, DocumentStatus.POSTED)
         self.assertTrue(self.document.is_posted)
         self.assertIsNotNone(self.document.posted_at)
         self.assertEqual(self.document.posted_by, self.user)
+        self.assertEqual(self.document.journal_entry, journal_entry)
+
+        # The ledger entry is posted, not merely created.
+        self.assertTrue(journal_entry.is_posted)
+
+        # BR-BUS-001: a second posting is rejected and leaves the ledger alone.
+        # The count is asserted, not just the exception, because "raises" and
+        # "raised before creating a second journal entry" are different
+        # guarantees and only the second one protects the books.
+        with self.assertRaises(ValueError) as context:
+            self.posting_service.post_document(self.document, self.user)
+
+        self.assertIn("already been posted", str(context.exception))
+        self.assertEqual(
+            JournalEntry.objects.filter(source_document=self.document).count(), 1
+        )
+        self.document.refresh_from_db()
         self.assertEqual(self.document.journal_entry, journal_entry)
 
     def test_cannot_post_already_posted_document(self):
