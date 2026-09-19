@@ -222,3 +222,23 @@ Format:
 **Symptom:** `grep 'TO app_user'` across commit `290cc7e73e` returned **zero** matches, which reads as "the policies were never re-principled and are still `TO PUBLIC`". They were not: `common/rls/migrations/0004_tenant_isolation_closure.py` emits every policy as `TO {APP_ROLE}` from `APP_ROLE = "app_user"`, so the role name is only ever assembled at migration-run time. The grep was answering a different question than the one asked, and its confident zero was indistinguishable from a real absence.
 
 **Fix:** When a search for an expected literal finds nothing, establish whether the value is composed before concluding it is missing — grep the template (`{APP_ROLE}`, `f"..."` interpolations, constants, config lookups) or grep the *effect* (the migration's output, `pg_policies` after a migrate). The same rule covers the inverse: a literal present in source proves only that someone typed it, not that anything runs it (LL-018). Absence of a string is evidence about the string, never about the behaviour.
+
+---
+
+## LL-022 — A cluster-scoped object touched by a per-database migration is touched once per database
+
+**Trigger:** A migration that provisions or re-asserts something whose scope is larger than the database it runs in — a role, a tablespace, a cluster-wide setting — and that is written to be safe to run repeatedly.
+
+**Symptom:** `common/rls/migrations/0001` ended with `ALTER ROLE app_user NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOLOGIN`. The statement is idempotent, so it reads as harmless. Roles are **cluster-scoped**; a migration is not. So it ran once per database, and every freshly migrated database revoked `app_user`'s `LOGIN` across the entire cluster. pytest creates a fresh database per run, so running the test suite locked the running application out of any development or production database on that cluster. Reproduced in three commands: grant `LOGIN`, run `pytest tests/rls/test_rls_provisioning.py`, read `pg_roles` — `rolcanlogin` is `false`. The failure surfaces in a different component from the cause: the application cannot connect, and nothing in the test output mentions a role.
+
+**Fix:** Separate what a migration *must* assert from what the deployment *owns*. Re-assert the safety attributes (here `NOSUPERUSER`, `NOBYPASSRLS`, `NOCREATEDB`, `NOCREATEROLE`) — those must never drift. Do not re-assert anything the deployment is expected to set, because a per-database run will overwrite it cluster-wide. When a provisioning statement is being made "idempotent", ask what its scope is and how often it actually runs; idempotent in value is not idempotent in effect.
+
+---
+
+## LL-023 — A test suite cannot have a different database identity from the one that migrated it
+
+**Trigger:** Wanting end-to-end tests to run as the restricted runtime role, in an environment where migrations need a privileged one.
+
+**Symptom:** Django's test runner creates *and* migrates the test database through the `default` connection, so the role that migrates is the role the tests then run as; there is no seam between them. `test_db_signature()` also excludes `USER`, so a second alias with different credentials is grouped with the first as a mirror rather than giving the tests a second identity. A handoff predicted that splitting the runtime and deploy credentials would make a registration-time constraint testable. It does not. The suite stays green while the endpoint is broken in every environment that enforces the policies — a passing result that is evidence of nothing.
+
+**Fix:** Do not assume a privilege change reaches the tests. Where a test must exercise enforcement, assume the restricted role **inside** the test (`SET LOCAL ROLE app_user` within a transaction), which is equivalent for the duration of the block, and treat "this test does not enter that context" as "this test cannot see this class of defect". Record the gap as an item rather than leaving it as an inference about the suite's coverage.
