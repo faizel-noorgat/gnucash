@@ -112,3 +112,33 @@ Format:
 
 **Fix:** Never redefine a framework fixture to tweak a setting; put configuration in settings, where it belongs. If an override is genuinely needed, call the original explicitly and note in its docstring which behaviour is being preserved.
 
+---
+
+## LL-011 — A search index answers confidently about code that no longer exists
+
+**Trigger:** Using an indexed code-search tool (jcodemunch) after the tree has changed since the index was built.
+
+**Symptom:** Nothing in the response says "stale". `search_text` returned a method's *previous* docstring minutes after the file was edited, and `get_file_outline` returned zero symbols for a file that plainly exists — reading like "that file has no symbols" rather than "that file was not indexed". Worst case is a negative: "no callers found" built on a stale index silently under-reports, and a refactor proceeds on a false premise.
+
+**Fix:** Check the index build time (`indexed_at`) against the tree's modification time before trusting any result, and treat a negative from a stale index as no evidence at all. Call `register_edit` with `reindex=true` after editing, and `Read` the file before acting on it. The index is a convenience for finding things, never the authority on what exists.
+
+---
+
+## LL-012 — Two tests in the same tree can encode contradictory contracts
+
+**Trigger:** A test fails on a name or signature mismatch rather than on a behavioural assertion.
+
+**Symptom:** `AdvisorAccessGrant.revoke` was called as `revoke(revoked_by=…)` by the acceptance test and `revoke(revoked_by_user=…)` by the unit test — in the same live tree, with the same split present in the legacy tree it came from, which proves the acceptance test could never have passed there either. Making either test green breaks the other, so "get the suite green" has no local answer and the obvious moves are both wrong.
+
+**Fix:** Treat it as a contract conflict, not a bug, and resolve it against the domain: here, the field the method actually sets (`revoked_by`) settled it. Align the outlier, and say plainly in the commit and the handoff that a test was edited and why — an unexplained test edit is indistinguishable from weakening one. Never resolve this by picking whichever name makes more tests pass, and never by relaxing an assertion.
+
+---
+
+## LL-013 — A leftover test database produces failures that vanish on the next run
+
+**Trigger:** A suite that is otherwise deterministic reports `relation "…" does not exist` or "database already exists", more failures on one run than the next.
+
+**Symptom:** Twenty-seven failures with `ProgrammingError: relation "users" does not exist` on a run whose tests pass individually and pass when re-run as a whole — the failure count moves without a code change. It reads like a test-isolation bug or a real schema problem and is neither.
+
+**Fix:** Before diagnosing, re-run the same command once and compare. If the numbers move, suspect a test database left behind by a previously-aborted run (here `gnucash_test`, dropped by pytest on a clean exit and not on an abort). Do not create the test database by hand to "fix" it — that is what causes this state. Confirm determinism twice before believing any failure count.
+
